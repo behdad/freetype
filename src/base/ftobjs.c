@@ -822,6 +822,265 @@
            (load_flags & FT_LOAD_MONOCHROME ) )
         mode = FT_RENDER_MODE_MONO;
 
+
+      if ( ( load_flags & FT_LOAD_COLOR ) )
+      {
+
+        /* Try loading layered color glyphs */
+        TT_Face     ttface     = (TT_Face)face;
+        FT_Stream   stream     = face->stream;
+
+        FT_ULong     colr_pos, colr_size, cpal_pos, cpal_size;
+
+        /* COLR */
+        FT_UInt     colr_glyphs_size, colr_components_size;
+        FT_ULong    colr_glyphs_offset, colr_components_offset;
+
+        /* CPAL */
+        FT_UInt     colors_per_palette, palette_size, colors_size;
+        FT_UInt     palette_index, palette_start_index;
+        FT_ULong    colors_offset;
+
+        FT_UInt     i;
+        FT_UShort   component_start_index, num_components;
+
+        if ( ttface->goto_table ( ttface, TTAG_COLR, stream, &colr_size ) )
+          goto NoColor;
+        colr_pos = FT_STREAM_POS();
+        if ( colr_size < 14 || FT_FRAME_ENTER( 14 ) || FT_GET_USHORT() /* version */ < 0 )
+          goto NoColor;
+
+        colr_glyphs_size       = FT_GET_USHORT();
+        colr_glyphs_offset     = FT_GET_ULONG();
+        colr_components_offset = FT_GET_ULONG();
+        colr_components_size   = FT_GET_USHORT();
+
+        FT_FRAME_EXIT();
+
+        if ( colr_glyphs_offset > colr_size ||
+             ( colr_size - colr_glyphs_offset ) / 6 < colr_glyphs_size ||
+             colr_components_offset > colr_size ||
+             ( colr_size - colr_components_offset ) / 4 < colr_components_size )
+          goto NoColor;
+
+        if ( FT_FRAME_ENTER( 6 * colr_glyphs_size ) )
+          goto NoColor;
+
+        /* Loop over all glyphs!  XXX bsearch */
+        for ( i = 0; i < colr_glyphs_size; i++ )
+        {
+          FT_UShort  glyph_id;
+
+          glyph_id              = FT_GET_USHORT();
+          component_start_index = FT_GET_USHORT();
+          num_components        = FT_GET_USHORT();
+
+          if ( glyph_id == glyph_index )
+            break;
+        }
+
+        FT_FRAME_EXIT();
+
+        if ( i == colr_glyphs_size ||
+             component_start_index > colr_components_size ||
+             colr_components_size - component_start_index < num_components )
+          goto NoColor;
+
+        if ( ttface->goto_table ( ttface, TTAG_CPAL, stream, &cpal_size ) )
+          goto NoColor;
+        cpal_pos = FT_STREAM_POS();
+        if ( cpal_size < 12 || FT_FRAME_ENTER( 14 ) || FT_GET_USHORT() /* version */ != 0 )
+          goto NoColor;
+
+        colors_per_palette  = FT_GET_USHORT();
+        palette_size        = FT_GET_USHORT();
+        colors_size         = FT_GET_USHORT();
+        colors_offset       = FT_GET_ULONG();
+
+        FT_FRAME_EXIT();
+
+        if ( (cpal_size - 12) / 2 < palette_size )
+          goto NoColor;
+
+        palette_index = 0; /* Change to use other palettes */
+
+        if ( palette_index >= palette_size ||
+             FT_STREAM_SEEK( cpal_pos + 12 + palette_index * 2 ) ||
+             FT_FRAME_ENTER( 2 ) )
+          goto NoColor;
+
+        palette_start_index = FT_GET_USHORT();
+
+        FT_FRAME_EXIT();
+
+        if ( palette_start_index >= colors_size ||
+             colors_size - palette_start_index < colors_per_palette )
+          goto NoColor;
+
+        /* If I had a dime for everytime FreeType's lack of reentrancy got in my way
+         * I could have retired in Kona Island by now...  In this case it's not
+         * awfully bad.  Still, you never know what assumptions various parts of
+         * the codebase make... */
+        if ( FT_New_GlyphSlot( face, NULL ) )
+          goto NoColor;
+        /* From here on slot points to the final color destination, and face->glyph points
+         * to a temporary slot we use to load components. */
+
+        /* Walk over components and render one by one */
+        for ( i = 0; i < num_components; i++ )
+        {
+          FT_UShort   glyph_id;
+          FT_UShort   color_id;
+          FT_Byte     r, g, b, a;
+
+          if ( FT_STREAM_SEEK( colr_pos + colr_components_offset + (component_start_index + i) * 4 ) ||
+               FT_FRAME_ENTER( 4 ) )
+            continue;
+
+          glyph_id = FT_GET_USHORT();
+          color_id = FT_GET_USHORT();
+
+          FT_FRAME_EXIT();
+
+          if ( color_id == 0xFFFF )
+          {
+            /* Means "foreground color".
+             * XXX What to do?  Assume black... */
+            b = g = r = 0;
+            a = 255;
+          }
+          else
+          {
+            if ( color_id >= colors_per_palette ||
+                 FT_STREAM_SEEK( cpal_pos + colors_offset + (palette_start_index + color_id) * 4 ) ||
+                 FT_FRAME_ENTER( 4 ) )
+              continue;
+
+            b = FT_GET_BYTE();
+            g = FT_GET_BYTE();
+            r = FT_GET_BYTE();
+            a = FT_GET_BYTE();
+
+            FT_FRAME_EXIT();
+          }
+
+          error = FT_Load_Glyph( face, glyph_id, load_flags & ~FT_LOAD_COLOR /* XXX set target to GRAY; no bitmap? */ );
+          if ( error )
+            break;
+
+          if ( !slot->bitmap.buffer )
+          {
+            /* Initialize destination to color bitmap the size of first component. */
+            FT_Long size;
+            slot->bitmap_left       = face->glyph->bitmap_left;
+            slot->bitmap_top        = face->glyph->bitmap_top;
+            slot->bitmap.width      = face->glyph->bitmap.width;
+            slot->bitmap.rows       = face->glyph->bitmap.rows;
+            slot->bitmap.pixel_mode = FT_PIXEL_MODE_BGRA;
+            slot->bitmap.pitch      = slot->bitmap.width * 4;
+            slot->bitmap.num_grays  = 256;
+
+            size = slot->bitmap.rows * slot->bitmap.pitch;
+
+            error = ft_glyphslot_alloc_bitmap( slot, size );
+            if ( error )
+              break;
+
+            memset ( slot->bitmap.buffer, 0, size );
+          }
+          else
+          {
+            /* Resize destination if needed, such that new component fits. */
+            FT_Int x_min, x_max, y_min, y_max;
+            x_min = FT_MIN ( slot->bitmap_left, face->glyph->bitmap_left );
+            x_max = FT_MAX ( slot->bitmap_left + slot->bitmap.width,
+                             face->glyph->bitmap_left + face->glyph->bitmap.width );
+            y_min = FT_MIN ( slot->bitmap_top - slot->bitmap.rows,
+                             face->glyph->bitmap_top - face->glyph->bitmap.rows );
+            y_max = FT_MAX ( slot->bitmap_top, face->glyph->bitmap_top );
+
+            if ( x_min != slot->bitmap_left ||
+                 x_max != slot->bitmap_left + slot->bitmap.width ||
+                 y_min != slot->bitmap_top - slot->bitmap.rows ||
+                 y_max != slot->bitmap_top )
+            {
+              FT_Memory  memory = face->memory;
+              FT_UInt width = x_max - x_min;
+              FT_UInt rows  = y_max - y_min;
+              FT_UInt pitch = width * 4;
+              FT_UInt size  = rows * pitch;
+              FT_Byte *buf, *p, *q;
+              FT_Int x, y;
+
+              if ( FT_ALLOC( buf, size ) )
+                break;
+
+              memset ( buf, 0, size );
+
+              /* Special case width == slot->bitmap.width? */
+              p = slot->bitmap.buffer;
+              q = buf + pitch * (y_max - slot->bitmap_top) + 4 * (slot->bitmap_left - x_min);
+              for ( y = 0; y < slot->bitmap.rows; y++)
+              {
+                memcpy (q, p, slot->bitmap.width * 4);
+                p += slot->bitmap.pitch;
+                q += pitch;
+              }
+
+              ft_glyphslot_set_bitmap( slot, buf );
+              slot->bitmap_top   = y_max;
+              slot->bitmap_left  = x_min;
+              slot->bitmap.width = width;
+              slot->bitmap.rows  = rows;
+              slot->bitmap.pitch = pitch;
+
+              slot->internal->flags |= FT_GLYPH_OWN_BITMAP;
+            }
+          }
+
+          /* XXX make sure face->glyph.bitmap is GRAY.  Convert if needed?! */
+          {
+            FT_Byte *p, *q;
+            FT_UInt x, y;
+
+            p = face->glyph->bitmap.buffer;
+            q = slot->bitmap.buffer +
+                slot->bitmap.pitch * (slot->bitmap_top - face->glyph->bitmap_top) +
+                4 * (face->glyph->bitmap_left - slot->bitmap_left);
+            for ( y = 0; y < face->glyph->bitmap.rows; y++)
+            {
+              for ( x = 0; x < face->glyph->bitmap.width; x++)
+              {
+                int aa  = p[x];
+                int fa = a * aa / 255;
+                /* Foreground color is NOT premultiplied. */
+                int fb = b * fa / 255;
+                int fg = g * fa / 255;
+                int fr = r * fa / 255;
+                int ba2 = 255 - fa;
+                int bb = q[4*x + 0];
+                int bg = q[4*x + 1];
+                int br = q[4*x + 2];
+                int ba = q[4*x + 3];
+                q[4*x + 0] = bb * ba2 / 255 + fb;
+                q[4*x + 1] = bg * ba2 / 255 + fg;
+                q[4*x + 2] = br * ba2 / 255 + fr;
+                q[4*x + 3] = ba * ba2 / 255 + fa;
+              }
+              p += face->glyph->bitmap.pitch;
+              q += slot->bitmap.pitch;
+            }
+
+          }
+
+        }
+
+        FT_Done_GlyphSlot( face->glyph );
+
+        goto Exit;
+      }
+    NoColor:
+
       error = FT_Render_Glyph( slot, mode );
     }
 
