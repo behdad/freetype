@@ -2113,6 +2113,8 @@
 
           error = open_face( driver, stream, external_stream, face_index,
                              num_params, params, &face );
+          stream = face->stream; /* Stream may have been changed. */
+
           if ( !error )
             goto Success;
 

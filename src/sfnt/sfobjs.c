@@ -33,6 +33,10 @@
 #include "ttbdf.h"
 #endif
 
+#ifdef FT_CONFIG_OPTION_SYSTEM_ZLIB
+#include <zlib.h>
+#endif
+
 
   /*************************************************************************/
   /*                                                                       */
@@ -346,6 +350,295 @@
     return FT_ENCODING_NONE;
   }
 
+#define WRITE_BYTE( p, v ) \
+  do { \
+    *(p)++ = (v) >> 0; \
+  } while (0)
+#define WRITE_USHORT( p, v ) \
+  do { \
+    *(p)++ = (v) >> 8; \
+    *(p)++ = (v) >> 0; \
+  } while (0)
+#define WRITE_ULONG( p, v ) \
+  do { \
+    *(p)++ = (v) >> 24; \
+    *(p)++ = (v) >> 16; \
+    *(p)++ = (v) >>  8; \
+    *(p)++ = (v) >>  0; \
+  } while (0)
+
+  static void
+  sfnt_stream_close( FT_Stream  stream )
+  {
+    FT_Memory  memory = stream->memory;
+
+    FT_FREE( stream->base );
+
+    stream->size  = 0;
+    stream->base  = 0;
+    stream->close = 0;
+  }
+
+  /* Replaces face->root.stream with a stream containing the extracted
+   * sfnt of a woff font. */
+  static FT_Error
+  woff_open_font( FT_Stream  stream,
+                  TT_Face    face )
+  {
+    FT_Memory      memory = stream->memory;
+    FT_Error       error = FT_Err_Ok;
+    WOFF_HeaderRec woff;
+    FT_ULong       woff_offset;
+    FT_Byte*       sfnt;
+    FT_Byte*       sfnt_header;
+    FT_ULong       sfnt_offset;
+    FT_Stream      sfnt_stream;
+    FT_Int         nn;
+
+    static const FT_Frame_Field  woff_header_fields[] =
+    {
+#undef  FT_STRUCTURE
+#define FT_STRUCTURE  WOFF_HeaderRec
+
+      FT_FRAME_START( 8 ),
+        FT_FRAME_ULONG( signature ),
+        FT_FRAME_ULONG( flavor ),
+        FT_FRAME_ULONG( length ),
+        FT_FRAME_USHORT( num_tables ),
+        FT_FRAME_USHORT( reserved ),
+        FT_FRAME_ULONG( totalSfntSize ),
+        FT_FRAME_USHORT( majorVersion ),
+        FT_FRAME_USHORT( minorVersion ),
+        FT_FRAME_ULONG( metaOffset ),
+        FT_FRAME_ULONG( metaLength ),
+        FT_FRAME_ULONG( metaOrigLength ),
+        FT_FRAME_ULONG( privOffset ),
+        FT_FRAME_ULONG( privLength ),
+      FT_FRAME_END
+    };
+
+    FT_ASSERT( stream == face->root.stream );
+    FT_ASSERT( FT_STREAM_POS() == 0 );
+
+    if ( FT_STREAM_READ_FIELDS( woff_header_fields, &woff ) )
+      return error;
+
+    /* Make sure we don't recurse back here or hit ttc code. */
+    if ( woff.flavor == TTAG_wOFF || woff.flavor == TTAG_ttcf )
+      return FT_THROW( Invalid_Table );
+
+    /* Misc checks. */
+    if ( woff.length != stream->size || woff.num_tables == 0 ||
+         44 + woff.num_tables * 20UL >= woff.length ||
+         12 + woff.num_tables * 16UL >= woff.totalSfntSize ||
+         ( woff.totalSfntSize & 3 ) != 0 ||
+         ( woff.metaOffset == 0 && ( woff.metaLength != 0 ||
+                                     woff.metaOrigLength != 0 ) ) ||
+         ( woff.metaLength != 0 && woff.metaOrigLength == 0 ) ||
+         ( woff.privOffset == 0 && woff.privLength != 0 ) )
+      return FT_THROW( Invalid_Table );
+
+    if ( FT_ALLOC( sfnt, woff.totalSfntSize ) || FT_NEW( sfnt_stream ) )
+      goto Exit;
+
+    sfnt_header = sfnt;
+
+    /* Write sfnt header. */
+    {
+      FT_UInt searchRange, entrySelector, rangeShift, x;
+
+      x = woff.num_tables;
+      entrySelector = 0;
+      while (x)
+      {
+        x >>= 1;
+        entrySelector += 1;
+      }
+      entrySelector--;
+      searchRange = (1 << entrySelector) * 16;
+      rangeShift = woff.num_tables * 16 - searchRange;
+
+      /* Write! */
+
+      WRITE_ULONG ( sfnt_header, woff.flavor );
+      WRITE_USHORT( sfnt_header, woff.num_tables );
+      WRITE_USHORT( sfnt_header, searchRange );
+      WRITE_USHORT( sfnt_header, entrySelector );
+      WRITE_USHORT( sfnt_header, rangeShift );
+    }
+
+    woff_offset = 44 + woff.num_tables * 20L;
+    sfnt_offset = 12 + woff.num_tables * 16L;
+
+    FT_TRACE2(( "\n"
+                "  tag    offset    compLen  origLen  checksum\n"
+                "  ----------------------------------\n" ));
+    for ( nn = 0; nn < woff.num_tables; nn++ )
+    {
+      WOFF_TableRec entry;
+
+      if ( FT_STREAM_SEEK( 44 + nn * 20 ) ||
+           FT_FRAME_ENTER( 20L ) )
+        return error;
+
+      entry.Tag        = FT_GET_TAG4();
+      entry.Offset     = FT_GET_ULONG();
+      entry.CompLength = FT_GET_ULONG();
+      entry.OrigLength = FT_GET_ULONG();
+      entry.CheckSum   = FT_GET_ULONG();
+
+      FT_FRAME_EXIT();
+
+      if ( entry.Offset != woff_offset ||
+           woff_offset + entry.CompLength > woff.length ||
+           sfnt_offset + entry.OrigLength > woff.totalSfntSize ||
+           entry.CompLength > entry.OrigLength )
+      {
+        error = FT_THROW( Invalid_Table );
+        goto Exit;
+
+        FT_TRACE2(( "  %c%c%c%c  %08lx  %08lx  %08lx  %08lx\n",
+                    (FT_Char)( entry.Tag >> 24 ),
+                    (FT_Char)( entry.Tag >> 16 ),
+                    (FT_Char)( entry.Tag >> 8  ),
+                    (FT_Char)( entry.Tag       ),
+                    entry.Offset,
+                    entry.CompLength,
+                    entry.OrigLength,
+                    entry.CheckSum ));
+      }
+
+      /* Write SFNT table entry. */
+      WRITE_ULONG ( sfnt_header, entry.Tag );
+      WRITE_ULONG ( sfnt_header, entry.CheckSum );
+      WRITE_ULONG ( sfnt_header, sfnt_offset );
+      WRITE_ULONG ( sfnt_header, entry.OrigLength );
+
+      /* Write table data. */
+
+      if ( FT_STREAM_SEEK( entry.Offset ) ||
+           FT_FRAME_ENTER( entry.CompLength ) )
+        goto Exit;
+
+      if ( entry.CompLength == entry.OrigLength )
+      {
+        /* Uncompressed data; just copy. */
+        ft_memcpy( sfnt + sfnt_offset, stream->cursor, entry.CompLength );
+      }
+      else
+      {
+#ifdef FT_CONFIG_OPTION_SYSTEM_ZLIB
+        /* Uncompress with zlib. */
+        FT_Int ret;
+        uLongf destLen = entry.OrigLength;
+
+        ret = uncompress( sfnt + sfnt_offset, &destLen,
+                          stream->cursor, entry.CompLength );
+        if ( ret == Z_BUF_ERROR ||
+             ret == Z_DATA_ERROR ||
+             destLen != entry.OrigLength )
+          error = FT_THROW( Invalid_Table );
+        else if ( ret == Z_MEM_ERROR )
+          error = FT_THROW( Out_Of_Memory );
+
+        if ( error )
+          goto Exit;
+#else
+        error = FT_THROW( Unimplemented_Feature );
+        got Exit;
+#endif
+      }
+
+      FT_FRAME_EXIT();
+
+      woff_offset += entry.CompLength;
+      while ( woff_offset & 3 )
+      {
+        /* We don't check that these padding bytes are actually '\0'. */
+        woff_offset++;
+      }
+      sfnt_offset += entry.OrigLength;
+      while ( sfnt_offset & 3 )
+      {
+        sfnt[sfnt_offset] = '\0';
+        sfnt_offset++;
+      }
+    }
+
+    /*
+     * Final checks!
+     *
+     * We don't decode and check the metadata block.
+     * We don't check table checksums either.
+     * But other than those, I think we implement all
+     * "MUST" checks from the spec.
+     */
+    if ( woff.metaOffset )
+    {
+      if ( woff.metaOffset != woff_offset ||
+           woff.metaOffset + woff.metaLength > woff.length )
+      {
+        error = FT_THROW( Invalid_Table );
+        goto Exit;
+      }
+
+      woff_offset += woff.metaOffset;
+    }
+    if ( woff.privOffset )
+    {
+      while ( woff_offset & 3 )
+      {
+        /* We don't check that these padding bytes are actually '\0'. */
+        woff_offset++;
+      }
+      if ( woff.privOffset != woff_offset ||
+           woff.privOffset + woff.privLength > woff.length )
+      {
+        error = FT_THROW( Invalid_Table );
+        goto Exit;
+      }
+
+      woff_offset += woff.privOffset;
+    }
+    if ( sfnt_offset != woff.totalSfntSize ||
+         woff_offset != woff.length )
+    {
+      error = FT_THROW( Invalid_Table );
+      goto Exit;
+    }
+
+    /* Ok!  Finally ready.  Swap out stream and return. */
+
+    FT_ZERO( sfnt_stream );
+    FT_Stream_OpenMemory( sfnt_stream, sfnt, sfnt_offset );
+    sfnt_stream->memory = stream->memory;
+    sfnt_stream->close = sfnt_stream_close;
+
+    FT_Stream_Free(
+      face->root.stream,
+      ( face->root.face_flags & FT_FACE_FLAG_EXTERNAL_STREAM ) != 0 );
+
+    stream = face->root.stream = sfnt_stream;
+    face->root.face_flags &= ~FT_FACE_FLAG_EXTERNAL_STREAM;
+
+  Exit:
+    if ( error )
+    {
+      if ( sfnt )
+        FT_FREE( sfnt );
+      if ( sfnt_stream )
+      {
+        FT_Stream_Close( sfnt_stream );
+        FT_FREE( sfnt_stream );
+      }
+    }
+
+    return error;
+  }
+
+#undef WRITE_BYTE
+#undef WRITE_USHORT
+#undef WRITE_ULONG
 
   /* Fill in face->ttc_header.  If the font is not a TTC, it is */
   /* synthesized into a TTC with one offset table.              */
@@ -373,10 +666,27 @@
     face->ttc_header.version = 0;
     face->ttc_header.count   = 0;
 
+  retry:
     offset = FT_STREAM_POS();
 
     if ( FT_READ_ULONG( tag ) )
       return error;
+
+    if ( tag == TTAG_wOFF )
+    {
+      FT_TRACE2(( "sfnt_open_font: file is a woff; synthesizing sfnt\n" ));
+
+      if ( FT_STREAM_SEEK( offset ) )
+        return error;
+
+      error = woff_open_font( stream, face );
+      if ( error )
+        return error;
+
+      /* Swap out stream and retry! */
+      stream = face->root.stream;
+      goto retry;
+    }
 
     if ( tag != 0x00010000UL &&
          tag != TTAG_ttcf    &&
@@ -479,6 +789,9 @@
     error = sfnt_open_font( stream, face );
     if ( error )
       return error;
+
+    /* Stream may have changed in sfnt_open_font. */
+    stream = face->root.stream;
 
     FT_TRACE2(( "sfnt_init_face: %08p, %ld\n", face, face_index ));
 
