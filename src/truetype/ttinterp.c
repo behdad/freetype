@@ -53,45 +53,6 @@
 #define MAX_RUNNABLE_OPCODES  1000000L
 
 
-  /*************************************************************************/
-  /*                                                                       */
-  /* There are two kinds of implementations:                               */
-  /*                                                                       */
-  /* a. static implementation                                              */
-  /*                                                                       */
-  /*    The current execution context is a static variable, which fields   */
-  /*    are accessed directly by the interpreter during execution.  The    */
-  /*    context is named `cur'.                                            */
-  /*                                                                       */
-  /*    This version is non-reentrant, of course.                          */
-  /*                                                                       */
-  /* b. indirect implementation                                            */
-  /*                                                                       */
-  /*    The current execution context is passed to _each_ function as its  */
-  /*    first argument, and each field is thus accessed indirectly.        */
-  /*                                                                       */
-  /*    This version is fully re-entrant.                                  */
-  /*                                                                       */
-  /* The idea is that an indirect implementation may be slower to execute  */
-  /* on low-end processors that are used in some systems (like 386s or     */
-  /* even 486s).                                                           */
-  /*                                                                       */
-  /* As a consequence, the indirect implementation is now the default, as  */
-  /* its performance costs can be considered negligible in our context.    */
-  /* Note, however, that we kept the same source with macros because:      */
-  /*                                                                       */
-  /* - The code is kept very close in design to the Pascal code used for   */
-  /*   development.                                                        */
-  /*                                                                       */
-  /* - It's much more readable that way!                                   */
-  /*                                                                       */
-  /* - It's still open to experimentation and tuning.                      */
-  /*                                                                       */
-  /*************************************************************************/
-
-
-#ifndef TT_CONFIG_OPTION_STATIC_INTERPRETER     /* indirect implementation */
-
 #define CUR  (*exc)                             /* see ttobjs.h */
 
   /*************************************************************************/
@@ -100,21 +61,6 @@
   /* stupid warnings from pedantic compilers.                              */
   /*                                                                       */
 #define FT_UNUSED_EXEC  FT_UNUSED( exc )
-
-#else                                           /* static implementation */
-
-#define CUR  cur
-
-#define FT_UNUSED_EXEC  int  __dummy = __dummy
-
-  static
-  TT_ExecContextRec  cur;   /* static exec. context variable */
-
-  /* apparently, we have a _lot_ of direct indexing when accessing  */
-  /* the static `cur', which makes the code bigger (due to all the  */
-  /* four bytes addresses).                                         */
-
-#endif /* TT_CONFIG_OPTION_STATIC_INTERPRETER */
 
 
   /*************************************************************************/
