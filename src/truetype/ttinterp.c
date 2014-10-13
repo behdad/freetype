@@ -2827,596 +2827,6 @@
   }
 
 
-#define DO_SVTCA                            \
-  {                                         \
-    FT_Short  A, B;                         \
-                                            \
-                                            \
-    A = (FT_Short)( CUR.opcode & 1 ) << 14; \
-    B = A ^ (FT_Short)0x4000;               \
-                                            \
-    CUR.GS.freeVector.x = A;                \
-    CUR.GS.projVector.x = A;                \
-    CUR.GS.dualVector.x = A;                \
-                                            \
-    CUR.GS.freeVector.y = B;                \
-    CUR.GS.projVector.y = B;                \
-    CUR.GS.dualVector.y = B;                \
-                                            \
-    COMPUTE_Funcs();                        \
-  }
-
-
-#define DO_SPVTCA                           \
-  {                                         \
-    FT_Short  A, B;                         \
-                                            \
-                                            \
-    A = (FT_Short)( CUR.opcode & 1 ) << 14; \
-    B = A ^ (FT_Short)0x4000;               \
-                                            \
-    CUR.GS.projVector.x = A;                \
-    CUR.GS.dualVector.x = A;                \
-                                            \
-    CUR.GS.projVector.y = B;                \
-    CUR.GS.dualVector.y = B;                \
-                                            \
-    GUESS_VECTOR( freeVector );             \
-                                            \
-    COMPUTE_Funcs();                        \
-  }
-
-
-#define DO_SFVTCA                           \
-  {                                         \
-    FT_Short  A, B;                         \
-                                            \
-                                            \
-    A = (FT_Short)( CUR.opcode & 1 ) << 14; \
-    B = A ^ (FT_Short)0x4000;               \
-                                            \
-    CUR.GS.freeVector.x = A;                \
-    CUR.GS.freeVector.y = B;                \
-                                            \
-    GUESS_VECTOR( projVector );             \
-                                            \
-    COMPUTE_Funcs();                        \
-  }
-
-
-#define DO_SPVTL                                      \
-    if ( INS_SxVTL( (FT_UShort)args[1],               \
-                    (FT_UShort)args[0],               \
-                    CUR.opcode,                       \
-                    &CUR.GS.projVector ) == SUCCESS ) \
-    {                                                 \
-      CUR.GS.dualVector = CUR.GS.projVector;          \
-      GUESS_VECTOR( freeVector );                     \
-      COMPUTE_Funcs();                                \
-    }
-
-
-#define DO_SFVTL                                      \
-    if ( INS_SxVTL( (FT_UShort)args[1],               \
-                    (FT_UShort)args[0],               \
-                    CUR.opcode,                       \
-                    &CUR.GS.freeVector ) == SUCCESS ) \
-    {                                                 \
-      GUESS_VECTOR( projVector );                     \
-      COMPUTE_Funcs();                                \
-    }
-
-
-#define DO_SFVTPV                          \
-    GUESS_VECTOR( projVector );            \
-    CUR.GS.freeVector = CUR.GS.projVector; \
-    COMPUTE_Funcs();
-
-
-#define DO_SPVFS                                \
-  {                                             \
-    FT_Short  S;                                \
-    FT_Long   X, Y;                             \
-                                                \
-                                                \
-    /* Only use low 16bits, then sign extend */ \
-    S = (FT_Short)args[1];                      \
-    Y = (FT_Long)S;                             \
-    S = (FT_Short)args[0];                      \
-    X = (FT_Long)S;                             \
-                                                \
-    NORMalize( X, Y, &CUR.GS.projVector );      \
-                                                \
-    CUR.GS.dualVector = CUR.GS.projVector;      \
-    GUESS_VECTOR( freeVector );                 \
-    COMPUTE_Funcs();                            \
-  }
-
-
-#define DO_SFVFS                                \
-  {                                             \
-    FT_Short  S;                                \
-    FT_Long   X, Y;                             \
-                                                \
-                                                \
-    /* Only use low 16bits, then sign extend */ \
-    S = (FT_Short)args[1];                      \
-    Y = (FT_Long)S;                             \
-    S = (FT_Short)args[0];                      \
-    X = S;                                      \
-                                                \
-    NORMalize( X, Y, &CUR.GS.freeVector );      \
-    GUESS_VECTOR( projVector );                 \
-    COMPUTE_Funcs();                            \
-  }
-
-
-#ifdef TT_CONFIG_OPTION_UNPATENTED_HINTING
-#define DO_GPV                                   \
-    if ( CUR.face->unpatented_hinting )          \
-    {                                            \
-      args[0] = CUR.GS.both_x_axis ? 0x4000 : 0; \
-      args[1] = CUR.GS.both_x_axis ? 0 : 0x4000; \
-    }                                            \
-    else                                         \
-    {                                            \
-      args[0] = CUR.GS.projVector.x;             \
-      args[1] = CUR.GS.projVector.y;             \
-    }
-#else
-#define DO_GPV                                   \
-    args[0] = CUR.GS.projVector.x;               \
-    args[1] = CUR.GS.projVector.y;
-#endif
-
-
-#ifdef TT_CONFIG_OPTION_UNPATENTED_HINTING
-#define DO_GFV                                   \
-    if ( CUR.face->unpatented_hinting )          \
-    {                                            \
-      args[0] = CUR.GS.both_x_axis ? 0x4000 : 0; \
-      args[1] = CUR.GS.both_x_axis ? 0 : 0x4000; \
-    }                                            \
-    else                                         \
-    {                                            \
-      args[0] = CUR.GS.freeVector.x;             \
-      args[1] = CUR.GS.freeVector.y;             \
-    }
-#else
-#define DO_GFV                                   \
-    args[0] = CUR.GS.freeVector.x;               \
-    args[1] = CUR.GS.freeVector.y;
-#endif
-
-
-#define DO_SRP0                      \
-    CUR.GS.rp0 = (FT_UShort)args[0];
-
-
-#define DO_SRP1                      \
-    CUR.GS.rp1 = (FT_UShort)args[0];
-
-
-#define DO_SRP2                      \
-    CUR.GS.rp2 = (FT_UShort)args[0];
-
-
-#define DO_RTHG                                         \
-    CUR.GS.round_state = TT_Round_To_Half_Grid;         \
-    CUR.func_round = (TT_Round_Func)Round_To_Half_Grid;
-
-
-#define DO_RTG                                     \
-    CUR.GS.round_state = TT_Round_To_Grid;         \
-    CUR.func_round = (TT_Round_Func)Round_To_Grid;
-
-
-#define DO_RTDG                                           \
-    CUR.GS.round_state = TT_Round_To_Double_Grid;         \
-    CUR.func_round = (TT_Round_Func)Round_To_Double_Grid;
-
-
-#define DO_RUTG                                       \
-    CUR.GS.round_state = TT_Round_Up_To_Grid;         \
-    CUR.func_round = (TT_Round_Func)Round_Up_To_Grid;
-
-
-#define DO_RDTG                                         \
-    CUR.GS.round_state = TT_Round_Down_To_Grid;         \
-    CUR.func_round = (TT_Round_Func)Round_Down_To_Grid;
-
-
-#define DO_ROFF                                 \
-    CUR.GS.round_state = TT_Round_Off;          \
-    CUR.func_round = (TT_Round_Func)Round_None;
-
-
-#define DO_SROUND                                \
-    SET_SuperRound( 0x4000, args[0] );           \
-    CUR.GS.round_state = TT_Round_Super;         \
-    CUR.func_round = (TT_Round_Func)Round_Super;
-
-
-#define DO_S45ROUND                                 \
-    SET_SuperRound( 0x2D41, args[0] );              \
-    CUR.GS.round_state = TT_Round_Super_45;         \
-    CUR.func_round = (TT_Round_Func)Round_Super_45;
-
-
-#define DO_SLOOP                            \
-    if ( args[0] < 0 )                      \
-      CUR.error = FT_THROW( Bad_Argument ); \
-    else                                    \
-      CUR.GS.loop = args[0];
-
-
-#define DO_SMD                         \
-    CUR.GS.minimum_distance = args[0];
-
-
-#define DO_SCVTCI                                     \
-    CUR.GS.control_value_cutin = (FT_F26Dot6)args[0];
-
-
-#define DO_SSWCI                                     \
-    CUR.GS.single_width_cutin = (FT_F26Dot6)args[0];
-
-
-#define DO_SSW                                                     \
-    CUR.GS.single_width_value = FT_MulFix( args[0],                \
-                                           CUR.tt_metrics.scale );
-
-
-#define DO_FLIPON            \
-    CUR.GS.auto_flip = TRUE;
-
-
-#define DO_FLIPOFF            \
-    CUR.GS.auto_flip = FALSE;
-
-
-#define DO_SDB                             \
-    CUR.GS.delta_base = (FT_Short)args[0];
-
-
-#define DO_SDS                              \
-    CUR.GS.delta_shift = (FT_Short)args[0];
-
-
-#define DO_MD  /* nothing */
-
-
-#define DO_MPPEM              \
-    args[0] = CUR_Func_cur_ppem();
-
-
-  /* Note: The pointSize should be irrelevant in a given font program; */
-  /*       we thus decide to return only the ppem.                     */
-#if 0
-
-#define DO_MPS                       \
-    args[0] = CUR.metrics.pointSize;
-
-#else
-
-#define DO_MPS                \
-    args[0] = CUR_Func_cur_ppem();
-
-#endif /* 0 */
-
-
-#define DO_DUP         \
-    args[1] = args[0];
-
-
-#define DO_CLEAR     \
-    CUR.new_top = 0;
-
-
-#define DO_SWAP        \
-  {                    \
-    FT_Long  L;        \
-                       \
-                       \
-    L       = args[0]; \
-    args[0] = args[1]; \
-    args[1] = L;       \
-  }
-
-
-#define DO_DEPTH       \
-    args[0] = CUR.top;
-
-
-#define DO_CINDEX                                  \
-  {                                                \
-    FT_Long  L;                                    \
-                                                   \
-                                                   \
-    L = args[0];                                   \
-                                                   \
-    if ( L <= 0 || L > CUR.args )                  \
-    {                                              \
-      if ( CUR.pedantic_hinting )                  \
-        CUR.error = FT_THROW( Invalid_Reference ); \
-      args[0] = 0;                                 \
-    }                                              \
-    else                                           \
-      args[0] = CUR.stack[CUR.args - L];           \
-  }
-
-
-#define DO_JROT                                                    \
-    if ( args[1] != 0 )                                            \
-    {                                                              \
-      if ( args[0] == 0 && CUR.args == 0 )                         \
-        CUR.error = FT_THROW( Bad_Argument );                      \
-      CUR.IP += args[0];                                           \
-      if ( CUR.IP < 0                                           || \
-           ( CUR.callTop > 0                                  &&   \
-             CUR.IP > CUR.callStack[CUR.callTop - 1].Def->end ) )  \
-        CUR.error = FT_THROW( Bad_Argument );                      \
-      CUR.step_ins = FALSE;                                        \
-    }
-
-
-#define DO_JMPR                                                  \
-    if ( args[0] == 0 && CUR.args == 0 )                         \
-      CUR.error = FT_THROW( Bad_Argument );                      \
-    CUR.IP += args[0];                                           \
-    if ( CUR.IP < 0                                           || \
-         ( CUR.callTop > 0                                  &&   \
-           CUR.IP > CUR.callStack[CUR.callTop - 1].Def->end ) )  \
-      CUR.error = FT_THROW( Bad_Argument );                      \
-    CUR.step_ins = FALSE;
-
-
-#define DO_JROF                                                    \
-    if ( args[1] == 0 )                                            \
-    {                                                              \
-      if ( args[0] == 0 && CUR.args == 0 )                         \
-        CUR.error = FT_THROW( Bad_Argument );                      \
-      CUR.IP += args[0];                                           \
-      if ( CUR.IP < 0                                           || \
-           ( CUR.callTop > 0                                  &&   \
-             CUR.IP > CUR.callStack[CUR.callTop - 1].Def->end ) )  \
-        CUR.error = FT_THROW( Bad_Argument );                      \
-      CUR.step_ins = FALSE;                                        \
-    }
-
-
-#define DO_LT                        \
-    args[0] = ( args[0] < args[1] );
-
-
-#define DO_LTEQ                       \
-    args[0] = ( args[0] <= args[1] );
-
-
-#define DO_GT                        \
-    args[0] = ( args[0] > args[1] );
-
-
-#define DO_GTEQ                       \
-    args[0] = ( args[0] >= args[1] );
-
-
-#define DO_EQ                         \
-    args[0] = ( args[0] == args[1] );
-
-
-#define DO_NEQ                        \
-    args[0] = ( args[0] != args[1] );
-
-
-#define DO_ODD                                                  \
-    args[0] = ( ( CUR_Func_round( args[0], 0 ) & 127 ) == 64 );
-
-
-#define DO_EVEN                                                \
-    args[0] = ( ( CUR_Func_round( args[0], 0 ) & 127 ) == 0 );
-
-
-#define DO_AND                        \
-    args[0] = ( args[0] && args[1] );
-
-
-#define DO_OR                         \
-    args[0] = ( args[0] || args[1] );
-
-
-#define DO_NOT          \
-    args[0] = !args[0];
-
-
-#define DO_ADD          \
-    args[0] += args[1];
-
-
-#define DO_SUB          \
-    args[0] -= args[1];
-
-
-#define DO_DIV                                               \
-    if ( args[1] == 0 )                                      \
-      CUR.error = FT_THROW( Divide_By_Zero );                \
-    else                                                     \
-      args[0] = FT_MulDiv_No_Round( args[0], 64L, args[1] );
-
-
-#define DO_MUL                                    \
-    args[0] = FT_MulDiv( args[0], args[1], 64L );
-
-
-#define DO_ABS                   \
-    args[0] = FT_ABS( args[0] );
-
-
-#define DO_NEG          \
-    args[0] = -args[0];
-
-
-#define DO_FLOOR    \
-    args[0] = FT_PIX_FLOOR( args[0] );
-
-
-#define DO_CEILING                    \
-    args[0] = FT_PIX_CEIL( args[0] );
-
-#ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
-
-#define DO_RS                                             \
-   {                                                      \
-     FT_ULong  I = (FT_ULong)args[0];                     \
-                                                          \
-                                                          \
-     if ( BOUNDSL( I, CUR.storeSize ) )                   \
-     {                                                    \
-       if ( CUR.pedantic_hinting )                        \
-         ARRAY_BOUND_ERROR;                               \
-       else                                               \
-         args[0] = 0;                                     \
-     }                                                    \
-     else                                                 \
-     {                                                    \
-       /* subpixel hinting - avoid Typeman Dstroke and */ \
-       /* IStroke and Vacuform rounds                  */ \
-                                                          \
-       if ( SUBPIXEL_HINTING                           && \
-            CUR.ignore_x_mode                          && \
-            ( ( I == 24                            &&     \
-                ( CUR.face->sph_found_func_flags &        \
-                  ( SPH_FDEF_SPACING_1 |                  \
-                    SPH_FDEF_SPACING_2 )         ) ) ||   \
-              ( I == 22                      &&           \
-                ( CUR.sph_in_func_flags    &              \
-                  SPH_FDEF_TYPEMAN_STROKES ) )       ||   \
-              ( I == 8                             &&     \
-                ( CUR.face->sph_found_func_flags &        \
-                  SPH_FDEF_VACUFORM_ROUND_1      ) &&     \
-                  CUR.iup_called                   ) ) )  \
-         args[0] = 0;                                     \
-       else                                               \
-         args[0] = CUR.storage[I];                        \
-     }                                                    \
-   }
-
-#else /* !TT_CONFIG_OPTION_SUBPIXEL_HINTING */
-
-#define DO_RS                           \
-   {                                    \
-     FT_ULong  I = (FT_ULong)args[0];   \
-                                        \
-                                        \
-     if ( BOUNDSL( I, CUR.storeSize ) ) \
-     {                                  \
-       if ( CUR.pedantic_hinting )      \
-       {                                \
-         ARRAY_BOUND_ERROR;             \
-       }                                \
-       else                             \
-         args[0] = 0;                   \
-     }                                  \
-     else                               \
-       args[0] = CUR.storage[I];        \
-   }
-
-#endif /* !TT_CONFIG_OPTION_SUBPIXEL_HINTING */
-
-
-#define DO_WS                           \
-   {                                    \
-     FT_ULong  I = (FT_ULong)args[0];   \
-                                        \
-                                        \
-     if ( BOUNDSL( I, CUR.storeSize ) ) \
-     {                                  \
-       if ( CUR.pedantic_hinting )      \
-       {                                \
-         ARRAY_BOUND_ERROR;             \
-       }                                \
-     }                                  \
-     else                               \
-       CUR.storage[I] = args[1];        \
-   }
-
-
-#define DO_RCVT                          \
-   {                                     \
-     FT_ULong  I = (FT_ULong)args[0];    \
-                                         \
-                                         \
-     if ( BOUNDSL( I, CUR.cvtSize ) )    \
-     {                                   \
-       if ( CUR.pedantic_hinting )       \
-       {                                 \
-         ARRAY_BOUND_ERROR;              \
-       }                                 \
-       else                              \
-         args[0] = 0;                    \
-     }                                   \
-     else                                \
-       args[0] = CUR_Func_read_cvt( I ); \
-   }
-
-
-#define DO_WCVTP                         \
-   {                                     \
-     FT_ULong  I = (FT_ULong)args[0];    \
-                                         \
-                                         \
-     if ( BOUNDSL( I, CUR.cvtSize ) )    \
-     {                                   \
-       if ( CUR.pedantic_hinting )       \
-       {                                 \
-         ARRAY_BOUND_ERROR;              \
-       }                                 \
-     }                                   \
-     else                                \
-       CUR_Func_write_cvt( I, args[1] ); \
-   }
-
-
-#define DO_WCVTF                                                \
-   {                                                            \
-     FT_ULong  I = (FT_ULong)args[0];                           \
-                                                                \
-                                                                \
-     if ( BOUNDSL( I, CUR.cvtSize ) )                           \
-     {                                                          \
-       if ( CUR.pedantic_hinting )                              \
-       {                                                        \
-         ARRAY_BOUND_ERROR;                                     \
-       }                                                        \
-     }                                                          \
-     else                                                       \
-       CUR.cvt[I] = FT_MulFix( args[1], CUR.tt_metrics.scale ); \
-   }
-
-
-#define DO_DEBUG                          \
-    CUR.error = FT_THROW( Debug_OpCode );
-
-
-#define DO_ROUND                                                   \
-    args[0] = CUR_Func_round(                                      \
-                args[0],                                           \
-                CUR.tt_metrics.compensations[CUR.opcode - 0x68] );
-
-
-#define DO_NROUND                                                            \
-    args[0] = ROUND_None( args[0],                                           \
-                          CUR.tt_metrics.compensations[CUR.opcode - 0x6C] );
-
-
-#define DO_MAX               \
-    if ( args[1] > args[0] ) \
-      args[0] = args[1];
-
-
-#define DO_MIN               \
-    if ( args[1] < args[0] ) \
-      args[0] = args[1];
 
 
   /*************************************************************************/
@@ -7181,32 +6591,101 @@
 
         case 0x06:  /* SPvTL // */
         case 0x07:  /* SPvTL +  */
-          DO_SPVTL
+          if ( INS_SxVTL( (FT_UShort)args[1],
+                          (FT_UShort)args[0],
+                          CUR.opcode,
+                          &CUR.GS.projVector ) == SUCCESS )
+          {
+            CUR.GS.dualVector = CUR.GS.projVector;
+            GUESS_VECTOR( freeVector );
+            COMPUTE_Funcs();
+          }
           break;
 
         case 0x08:  /* SFvTL // */
         case 0x09:  /* SFvTL +  */
-          DO_SFVTL
+          if ( INS_SxVTL( (FT_UShort)args[1],
+                          (FT_UShort)args[0],
+                          CUR.opcode,
+                          &CUR.GS.freeVector ) == SUCCESS )
+          {
+            GUESS_VECTOR( projVector );
+            COMPUTE_Funcs();
+          }
           break;
 
         case 0x0A:  /* SPvFS */
-          DO_SPVFS
+          {
+            FT_Short  S;
+            FT_Long   X, Y;
+
+
+            /* Only use low 16bits, then sign extend */
+            S = (FT_Short)args[1];
+            Y = (FT_Long)S;
+            S = (FT_Short)args[0];
+            X = (FT_Long)S;
+
+            NORMalize( X, Y, &CUR.GS.projVector );
+
+            CUR.GS.dualVector = CUR.GS.projVector;
+            GUESS_VECTOR( freeVector );
+            COMPUTE_Funcs();
+          }
           break;
 
         case 0x0B:  /* SFvFS */
-          DO_SFVFS
+          {
+            FT_Short  S;
+            FT_Long   X, Y;
+
+
+            /* Only use low 16bits, then sign extend */
+            S = (FT_Short)args[1];
+            Y = (FT_Long)S;
+            S = (FT_Short)args[0];
+            X = S;
+
+            NORMalize( X, Y, &CUR.GS.freeVector );
+            GUESS_VECTOR( projVector );
+            COMPUTE_Funcs();
+          }
           break;
 
         case 0x0C:  /* GPV */
-          DO_GPV
+#ifdef TT_CONFIG_OPTION_UNPATENTED_HINTING
+          if ( CUR.face->unpatented_hinting )
+          {
+            args[0] = CUR.GS.both_x_axis ? 0x4000 : 0;
+            args[1] = CUR.GS.both_x_axis ? 0 : 0x4000;
+          }
+          else
+#endif
+          {
+            args[0] = CUR.GS.projVector.x;
+            args[1] = CUR.GS.projVector.y;
+          }
           break;
 
         case 0x0D:  /* GFV */
-          DO_GFV
+#ifdef TT_CONFIG_OPTION_UNPATENTED_HINTING
+          if ( CUR.face->unpatented_hinting )
+          {
+            args[0] = CUR.GS.both_x_axis ? 0x4000 : 0;
+            args[1] = CUR.GS.both_x_axis ? 0 : 0x4000;
+          }
+          else
+#endif
+          {
+            args[0] = CUR.GS.freeVector.x;
+            args[1] = CUR.GS.freeVector.y;
+          }
           break;
 
         case 0x0E:  /* SFvTPv */
-          DO_SFVTPV
+          GUESS_VECTOR( projVector );
+          CUR.GS.freeVector = CUR.GS.projVector;
+          COMPUTE_Funcs();
           break;
 
         case 0x0F:  /* ISECT  */
@@ -7214,15 +6693,15 @@
           break;
 
         case 0x10:  /* SRP0 */
-          DO_SRP0
+          CUR.GS.rp0 = (FT_UShort)args[0];
           break;
 
         case 0x11:  /* SRP1 */
-          DO_SRP1
+          CUR.GS.rp1 = (FT_UShort)args[0];
           break;
 
         case 0x12:  /* SRP2 */
-          DO_SRP2
+          CUR.GS.rp2 = (FT_UShort)args[0];
           break;
 
         case 0x13:  /* SZP0 */
@@ -7242,19 +6721,24 @@
           break;
 
         case 0x17:  /* SLOOP */
-          DO_SLOOP
+          if ( args[0] < 0 )
+            CUR.error = FT_THROW( Bad_Argument );
+          else
+            CUR.GS.loop = args[0];
           break;
 
         case 0x18:  /* RTG */
-          DO_RTG
+          CUR.GS.round_state = TT_Round_To_Grid;
+          CUR.func_round = (TT_Round_Func)Round_To_Grid;
           break;
 
         case 0x19:  /* RTHG */
-          DO_RTHG
+          CUR.GS.round_state = TT_Round_To_Half_Grid;
+          CUR.func_round = (TT_Round_Func)Round_To_Half_Grid;
           break;
 
         case 0x1A:  /* SMD */
-          DO_SMD
+          CUR.GS.minimum_distance = args[0];
           break;
 
         case 0x1B:  /* ELSE */
@@ -7262,23 +6746,31 @@
           break;
 
         case 0x1C:  /* JMPR */
-          DO_JMPR
+          if ( args[0] == 0 && CUR.args == 0 )
+            CUR.error = FT_THROW( Bad_Argument );
+          CUR.IP += args[0];
+          if ( CUR.IP < 0                                           ||
+               ( CUR.callTop > 0                                  &&
+                 CUR.IP > CUR.callStack[CUR.callTop - 1].Def->end ) )
+            CUR.error = FT_THROW( Bad_Argument );
+          CUR.step_ins = FALSE;
           break;
 
         case 0x1D:  /* SCVTCI */
-          DO_SCVTCI
+          CUR.GS.control_value_cutin = (FT_F26Dot6)args[0];
           break;
 
         case 0x1E:  /* SSWCI */
-          DO_SSWCI
+          CUR.GS.single_width_cutin = (FT_F26Dot6)args[0];
           break;
 
         case 0x1F:  /* SSW */
-          DO_SSW
+          CUR.GS.single_width_value = FT_MulFix( args[0],
+                                                 CUR.tt_metrics.scale );
           break;
 
         case 0x20:  /* DUP */
-          DO_DUP
+          args[1] = args[0];
           break;
 
         case 0x21:  /* POP */
@@ -7286,19 +6778,38 @@
           break;
 
         case 0x22:  /* CLEAR */
-          DO_CLEAR
+          CUR.new_top = 0;
           break;
 
         case 0x23:  /* SWAP */
-          DO_SWAP
+          {
+            FT_Long  L;
+            L       = args[0];
+            args[0] = args[1];
+            args[1] = L;
+          }
           break;
 
         case 0x24:  /* DEPTH */
-          DO_DEPTH
+          args[0] = CUR.top;
           break;
 
         case 0x25:  /* CINDEX */
-          DO_CINDEX
+          {
+            FT_Long  L;
+
+
+            L = args[0];
+
+            if ( L <= 0 || L > CUR.args )
+            {
+              if ( CUR.pedantic_hinting )
+                CUR.error = FT_THROW( Invalid_Reference );
+              args[0] = 0;
+            }
+            else
+              args[0] = CUR.stack[CUR.args - L];
+          }
           break;
 
         case 0x26:  /* MINDEX */
@@ -7376,7 +6887,8 @@
           break;
 
         case 0x3D:  /* RTDG */
-          DO_RTDG
+          CUR.GS.round_state = TT_Round_To_Double_Grid;
+          CUR.func_round = (TT_Round_Func)Round_To_Double_Grid;
           break;
 
         case 0x3E:  /* MIAP */
@@ -7393,7 +6905,20 @@
           break;
 
         case 0x42:  /* WS */
-          DO_WS
+          {
+            FT_ULong  I = (FT_ULong)args[0];
+
+
+            if ( BOUNDSL( I, CUR.storeSize ) )
+            {
+              if ( CUR.pedantic_hinting )
+              {
+                ARRAY_BOUND_ERROR;
+              }
+            }
+            else
+              CUR.storage[I] = args[1];
+          }
           break;
 
       Set_Invalid_Ref:
@@ -7401,15 +6926,93 @@
           break;
 
         case 0x43:  /* RS */
-          DO_RS
+          {
+#ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
+            FT_ULong  I = (FT_ULong)args[0];
+
+
+            if ( BOUNDSL( I, CUR.storeSize ) )
+            {
+              if ( CUR.pedantic_hinting )
+                ARRAY_BOUND_ERROR;
+              else
+                args[0] = 0;
+            }
+            else
+            {
+              /* subpixel hinting - avoid Typeman Dstroke and */
+              /* IStroke and Vacuform rounds                  */
+
+              if ( SUBPIXEL_HINTING                           &&
+                   CUR.ignore_x_mode                          &&
+                   ( ( I == 24                            &&
+                       ( CUR.face->sph_found_func_flags &
+                         ( SPH_FDEF_SPACING_1 |
+                           SPH_FDEF_SPACING_2 )         ) ) ||
+                     ( I == 22                      &&
+                       ( CUR.sph_in_func_flags    &
+                         SPH_FDEF_TYPEMAN_STROKES ) )       ||
+                     ( I == 8                             &&
+                       ( CUR.face->sph_found_func_flags &
+                         SPH_FDEF_VACUFORM_ROUND_1      ) &&
+                         CUR.iup_called                   ) ) )
+                args[0] = 0;
+              else
+                args[0] = CUR.storage[I];
+            }
+#else /* !TT_CONFIG_OPTION_SUBPIXEL_HINTING */
+            FT_ULong  I = (FT_ULong)args[0];
+
+
+            if ( BOUNDSL( I, CUR.storeSize ) )
+            {
+              if ( CUR.pedantic_hinting )
+              {
+                ARRAY_BOUND_ERROR;
+              }
+              else
+                args[0] = 0;
+            }
+            else
+              args[0] = CUR.storage[I];
+#endif /* !TT_CONFIG_OPTION_SUBPIXEL_HINTING */
+          }
           break;
 
         case 0x44:  /* WCVTP */
-          DO_WCVTP
+          {
+            FT_ULong  I = (FT_ULong)args[0];
+
+
+            if ( BOUNDSL( I, CUR.cvtSize ) )
+            {
+              if ( CUR.pedantic_hinting )
+              {
+                ARRAY_BOUND_ERROR;
+              }
+            }
+            else
+              CUR_Func_write_cvt( I, args[1] );
+          }
           break;
 
         case 0x45:  /* RCVT */
-          DO_RCVT
+          {
+            FT_ULong  I = (FT_ULong)args[0];
+
+
+            if ( BOUNDSL( I, CUR.cvtSize ) )
+            {
+              if ( CUR.pedantic_hinting )
+              {
+                ARRAY_BOUND_ERROR;
+              }
+              else
+                args[0] = 0;
+            }
+            else
+              args[0] = CUR_Func_read_cvt( I );
+          }
           break;
 
         case 0x46:  /* GC */
@@ -7427,55 +7030,62 @@
           break;
 
         case 0x4B:  /* MPPEM */
-          DO_MPPEM
+          args[0] = CUR_Func_cur_ppem();
           break;
 
         case 0x4C:  /* MPS */
-          DO_MPS
+          /* Note: The pointSize should be irrelevant in a given font program; */
+          /*        we thus decide to return only the ppem.                     */
+          /* XXX behdad: really?!?! This doesn't make sense. */
+#if 0
+          args[0] = CUR.metrics.pointSize;
+#else
+          args[0] = CUR_Func_cur_ppem();
+#endif
           break;
 
         case 0x4D:  /* FLIPON */
-          DO_FLIPON
+          CUR.GS.auto_flip = TRUE;
           break;
 
         case 0x4E:  /* FLIPOFF */
-          DO_FLIPOFF
+          CUR.GS.auto_flip = FALSE;
           break;
 
         case 0x4F:  /* DEBUG */
-          DO_DEBUG
+          CUR.error = FT_THROW( Debug_OpCode );
           break;
 
         case 0x50:  /* LT */
-          DO_LT
+          args[0] = ( args[0] < args[1] );
           break;
 
         case 0x51:  /* LTEQ */
-          DO_LTEQ
+          args[0] = ( args[0] <= args[1] );
           break;
 
         case 0x52:  /* GT */
-          DO_GT
+          args[0] = ( args[0] > args[1] );
           break;
 
         case 0x53:  /* GTEQ */
-          DO_GTEQ
+          args[0] = ( args[0] >= args[1] );
           break;
 
         case 0x54:  /* EQ */
-          DO_EQ
+          args[0] = ( args[0] == args[1] );
           break;
 
         case 0x55:  /* NEQ */
-          DO_NEQ
+          args[0] = ( args[0] != args[1] );
           break;
 
         case 0x56:  /* ODD */
-          DO_ODD
+          args[0] = ( ( CUR_Func_round( args[0], 0 ) & 127 ) == 64 );
           break;
 
         case 0x57:  /* EVEN */
-          DO_EVEN
+          args[0] = ( ( CUR_Func_round( args[0], 0 ) & 127 ) == 0 );
           break;
 
         case 0x58:  /* IF */
@@ -7487,15 +7097,15 @@
           break;
 
         case 0x5A:  /* AND */
-          DO_AND
+          args[0] = ( args[0] && args[1] );
           break;
 
         case 0x5B:  /* OR */
-          DO_OR
+          args[0] = ( args[0] || args[1] );
           break;
 
         case 0x5C:  /* NOT */
-          DO_NOT
+          args[0] = !args[0];
           break;
 
         case 0x5D:  /* DELTAP1 */
@@ -7503,61 +7113,80 @@
           break;
 
         case 0x5E:  /* SDB */
-          DO_SDB
+          CUR.GS.delta_base = (FT_Short)args[0];
           break;
 
         case 0x5F:  /* SDS */
-          DO_SDS
+          CUR.GS.delta_shift = (FT_Short)args[0];
           break;
 
         case 0x60:  /* ADD */
-          DO_ADD
+          args[0] += args[1];
           break;
 
         case 0x61:  /* SUB */
-          DO_SUB
+          args[0] -= args[1];
           break;
 
         case 0x62:  /* DIV */
-          DO_DIV
+          if ( args[1] == 0 )
+            CUR.error = FT_THROW( Divide_By_Zero );
+          else
+            args[0] = FT_MulDiv_No_Round( args[0], 64L, args[1] );
           break;
 
         case 0x63:  /* MUL */
-          DO_MUL
+          args[0] = FT_MulDiv( args[0], args[1], 64L );
           break;
 
         case 0x64:  /* ABS */
-          DO_ABS
+          args[0] = FT_ABS( args[0] );
           break;
 
         case 0x65:  /* NEG */
-          DO_NEG
+          args[0] = -args[0];
           break;
 
         case 0x66:  /* FLOOR */
-          DO_FLOOR
+          args[0] = FT_PIX_FLOOR( args[0] );
           break;
 
         case 0x67:  /* CEILING */
-          DO_CEILING
+          args[0] = FT_PIX_CEIL( args[0] );
           break;
 
         case 0x68:  /* ROUND */
         case 0x69:  /* ROUND */
         case 0x6A:  /* ROUND */
         case 0x6B:  /* ROUND */
-          DO_ROUND
+          args[0] = CUR_Func_round(
+                      args[0],
+                      CUR.tt_metrics.compensations[CUR.opcode - 0x68] );
           break;
 
         case 0x6C:  /* NROUND */
         case 0x6D:  /* NROUND */
         case 0x6E:  /* NRRUND */
         case 0x6F:  /* NROUND */
-          DO_NROUND
+          args[0] = ROUND_None( args[0],
+                                CUR.tt_metrics.compensations[CUR.opcode - 0x6C] );
           break;
 
         case 0x70:  /* WCVTF */
-          DO_WCVTF
+          {
+            FT_ULong  I = (FT_ULong)args[0];
+
+
+            if ( BOUNDSL( I, CUR.cvtSize ) )
+            {
+              if ( CUR.pedantic_hinting )
+              {
+                ARRAY_BOUND_ERROR;
+              }
+            }
+            else
+              CUR.cvt[I] = FT_MulFix( args[1], CUR.tt_metrics.scale );
+          }
           break;
 
         case 0x71:  /* DELTAP2 */
@@ -7572,23 +7201,48 @@
           break;
 
         case 0x76:  /* SROUND */
-          DO_SROUND
+          SET_SuperRound( 0x4000, args[0] );
+          CUR.GS.round_state = TT_Round_Super;
+          CUR.func_round = (TT_Round_Func)Round_Super;
           break;
 
         case 0x77:  /* S45Round */
-          DO_S45ROUND
+          SET_SuperRound( 0x2D41, args[0] );
+          CUR.GS.round_state = TT_Round_Super_45;
+          CUR.func_round = (TT_Round_Func)Round_Super_45;
           break;
 
         case 0x78:  /* JROT */
-          DO_JROT
+          if ( args[1] != 0 )
+          {
+            if ( args[0] == 0 && CUR.args == 0 )
+              CUR.error = FT_THROW( Bad_Argument );
+            CUR.IP += args[0];
+            if ( CUR.IP < 0                                           ||
+                 ( CUR.callTop > 0                                  &&
+                   CUR.IP > CUR.callStack[CUR.callTop - 1].Def->end ) )
+              CUR.error = FT_THROW( Bad_Argument );
+            CUR.step_ins = FALSE;
+          }
           break;
 
         case 0x79:  /* JROF */
-          DO_JROF
+          if ( args[1] == 0 )
+          {
+            if ( args[0] == 0 && CUR.args == 0 )
+              CUR.error = FT_THROW( Bad_Argument );
+            CUR.IP += args[0];
+            if ( CUR.IP < 0                                           ||
+                 ( CUR.callTop > 0                                  &&
+                   CUR.IP > CUR.callStack[CUR.callTop - 1].Def->end ) )
+              CUR.error = FT_THROW( Bad_Argument );
+            CUR.step_ins = FALSE;
+          }
           break;
 
         case 0x7A:  /* ROFF */
-          DO_ROFF
+          CUR.GS.round_state = TT_Round_Off;
+          CUR.func_round = (TT_Round_Func)Round_None;
           break;
 
         case 0x7B:  /* ???? */
@@ -7596,11 +7250,13 @@
           break;
 
         case 0x7C:  /* RUTG */
-          DO_RUTG
+          CUR.GS.round_state = TT_Round_Up_To_Grid;
+          CUR.func_round = (TT_Round_Func)Round_Up_To_Grid;
           break;
 
         case 0x7D:  /* RDTG */
-          DO_RDTG
+          CUR.GS.round_state = TT_Round_Down_To_Grid;
+          CUR.func_round = (TT_Round_Func)Round_Down_To_Grid;
           break;
 
         case 0x7E:  /* SANGW */
@@ -7647,11 +7303,13 @@
           break;
 
         case 0x8B:  /* MAX */
-          DO_MAX
+          if ( args[1] > args[0] )
+            args[0] = args[1];
           break;
 
         case 0x8C:  /* MIN */
-          DO_MIN
+          if ( args[1] < args[0] )
+            args[0] = args[1];
           break;
 
         case 0x8D:  /* SCANTYPE */
