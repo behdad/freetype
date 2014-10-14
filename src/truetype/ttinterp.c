@@ -2749,6 +2749,46 @@
   /*                                                                       */
   /*************************************************************************/
 
+#define ARRAY_BOUND_ERROR                         \
+    {                                             \
+      exc->error = FT_THROW( Invalid_Reference ); \
+      return;                                     \
+    }
+
+  static FT_Bool
+  Ins_SxTCAy( INS_ARG, FT_Int opcode )
+  {
+    FT_Short  AA, BB;
+
+
+    AA = (FT_Short)( ( opcode & 1 ) << 14 );
+    BB = (FT_Short)( AA ^ 0x4000 );
+
+    if ( opcode < 4 )
+    {
+      exc->GS.projVector.x = AA;
+      exc->GS.projVector.y = BB;
+
+      exc->GS.dualVector.x = AA;
+      exc->GS.dualVector.y = BB;
+    }
+    else
+    {
+      GUESS_VECTOR( projVector );
+    }
+
+    if ( ( opcode & 2 ) == 0 )
+    {
+      exc->GS.freeVector.x = AA;
+      exc->GS.freeVector.y = BB;
+    }
+    else
+    {
+      GUESS_VECTOR( freeVector );
+    }
+
+    COMPUTE_Funcs();
+  }
 
   static FT_Bool
   Ins_SxVTL( TT_ExecContext  exc,
@@ -2800,13 +2840,102 @@
   }
 
 
+  /*************************************************************************/
+  /*                                                                       */
+  /* SPVFS[]:      Set PVector From Stack                                  */
+  /* Opcode range: 0x0A                                                    */
+  /* Stack:        f2.14 f2.14 -->                                         */
+  /*                                                                       */
+  static void
+  Ins_SPVFS( INS_ARG )
+  {
+    FT_Short  S;
+    FT_Long   X, Y;
+
+
+    /* Only use low 16bits, then sign extend */
+    S = (FT_Short)args[1];
+    Y = (FT_Long)S;
+    S = (FT_Short)args[0];
+    X = (FT_Long)S;
+
+    NORMalize( X, Y, &exc->GS.projVector );
+
+    exc->GS.dualVector = exc->GS.projVector;
+    GUESS_VECTOR( freeVector );
+    COMPUTE_Funcs();
+  }
 
 
   /*************************************************************************/
   /*                                                                       */
-  /* The following functions are called as is within the switch statement. */
+  /* SFVFS[]:      Set FVector From Stack                                  */
+  /* Opcode range: 0x0B                                                    */
+  /* Stack:        f2.14 f2.14 -->                                         */
   /*                                                                       */
+  static void
+  Ins_SFVFS( INS_ARG )
+  {
+    FT_Short  S;
+    FT_Long   X, Y;
+
+
+    /* Only use low 16bits, then sign extend */
+    S = (FT_Short)args[1];
+    Y = (FT_Long)S;
+    S = (FT_Short)args[0];
+    X = S;
+
+    NORMalize( X, Y, &exc->GS.freeVector );
+    GUESS_VECTOR( projVector );
+    COMPUTE_Funcs();
+  }
+
   /*************************************************************************/
+  /*                                                                       */
+  /* GPV[]:        Get Projection Vector                                   */
+  /* Opcode range: 0x0C                                                    */
+  /* Stack:        ef2.14 --> ef2.14                                       */
+  /*                                                                       */
+  static void
+  Ins_GPV( INS_ARG )
+  {
+#ifdef TT_CONFIG_OPTION_UNPATENTED_HINTING
+    if ( exc->face->unpatented_hinting )
+    {
+      args[0] = exc->GS.both_x_axis ? 0x4000 : 0;
+      args[1] = exc->GS.both_x_axis ? 0 : 0x4000;
+    }
+    else
+#endif
+    {
+      args[0] = exc->GS.projVector.x;
+      args[1] = exc->GS.projVector.y;
+    }
+  }
+
+
+  /*************************************************************************/
+  /* GFV[]:        Get Freedom Vector                                      */
+  /* Opcode range: 0x0D                                                    */
+  /* Stack:        ef2.14 --> ef2.14                                       */
+  /*                                                                       */
+  static void
+  Ins_GFV( INS_ARG )
+  {
+#ifdef TT_CONFIG_OPTION_UNPATENTED_HINTING
+    if ( exc->face->unpatented_hinting )
+    {
+      args[0] = exc->GS.both_x_axis ? 0x4000 : 0;
+      args[1] = exc->GS.both_x_axis ? 0 : 0x4000;
+    }
+    else
+#endif
+    {
+      args[0] = exc->GS.freeVector.x;
+      args[1] = exc->GS.freeVector.y;
+    }
+  }
 
 
   /*************************************************************************/
@@ -2838,6 +2967,31 @@
 
       exc->stack[exc->args - 1] = K;
     }
+  }
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* CINDEX[]:     Copy INDEXed element                                    */
+  /* Opcode range: 0x25                                                    */
+  /* Stack:        int32 --> StkElt                                        */
+  /*                                                                       */
+  static void
+  Ins_CINDEX( INS_ARG )
+  {
+    FT_Long  L;
+
+
+    L = args[0];
+
+    if ( L <= 0 || L > exc->args )
+    {
+      if ( exc->pedantic_hinting )
+        exc->error = FT_THROW( Invalid_Reference );
+      args[0] = 0;
+    }
+    else
+      args[0] = exc->stack[exc->args - L];
   }
 
 
@@ -2978,6 +3132,24 @@
     } while ( nIfs != 0 );
   }
 
+  /*************************************************************************/
+  /*                                                                       */
+  /* JMPR[]:       JuMP Relative                                           */
+  /* Opcode range: 0x1C                                                    */
+  /* Stack:        int32 -->                                               */
+  /*                                                                       */
+  static void
+  Ins_JMPR( INS_ARG )
+  {
+    if ( args[0] == 0 && exc->args == 0 )
+      exc->error = FT_THROW( Bad_Argument );
+    exc->IP += args[0];
+    if ( exc->IP < 0                                           ||
+         ( exc->callTop > 0                                  &&
+           exc->IP > exc->callStack[exc->callTop - 1].Def->end ) )
+      exc->error = FT_THROW( Bad_Argument );
+    exc->step_ins = FALSE;
+  }
 
   /*************************************************************************/
   /*                                                                       */
@@ -3695,6 +3867,162 @@
       args[K] = GET_ShortIns();
 
     exc->step_ins = FALSE;
+  }
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* RS[]:         Read Store                                              */
+  /* Opcode range: 0x43                                                    */
+  /* Stack:        uint32 --> uint32                                       */
+  /*                                                                       */
+  static void
+  Ins_RS( INS_ARG )
+  {
+#ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
+    FT_ULong  I = (FT_ULong)args[0];
+
+
+    if ( BOUNDSL( I, exc->storeSize ) )
+    {
+      if ( exc->pedantic_hinting )
+        ARRAY_BOUND_ERROR;
+      else
+        args[0] = 0;
+    }
+    else
+    {
+      /* subpixel hinting - avoid Typeman Dstroke and */
+      /* IStroke and Vacuform rounds                  */
+
+      if ( SUBPIXEL_HINTING                           &&
+           exc->ignore_x_mode                          &&
+           ( ( I == 24                            &&
+               ( exc->face->sph_found_func_flags &
+                 ( SPH_FDEF_SPACING_1 |
+                   SPH_FDEF_SPACING_2 )         ) ) ||
+             ( I == 22                      &&
+               ( exc->sph_in_func_flags    &
+                 SPH_FDEF_TYPEMAN_STROKES ) )       ||
+             ( I == 8                             &&
+               ( exc->face->sph_found_func_flags &
+                 SPH_FDEF_VACUFORM_ROUND_1      ) &&
+                 exc->iup_called                   ) ) )
+        args[0] = 0;
+      else
+        args[0] = exc->storage[I];
+    }
+#else /* !TT_CONFIG_OPTION_SUBPIXEL_HINTING */
+    FT_ULong  I = (FT_ULong)args[0];
+
+
+    if ( BOUNDSL( I, exc->storeSize ) )
+    {
+      if ( exc->pedantic_hinting )
+      {
+        ARRAY_BOUND_ERROR;
+      }
+      else
+        args[0] = 0;
+    }
+    else
+      args[0] = exc->storage[I];
+#endif /* !TT_CONFIG_OPTION_SUBPIXEL_HINTING */
+  }
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* WS[]:         Write Store                                             */
+  /* Opcode range: 0x42                                                    */
+  /* Stack:        uint32 uint32 -->                                       */
+  /*                                                                       */
+  static void
+  Ins_WS( INS_ARG )
+  {
+    FT_ULong  I = (FT_ULong)args[0];
+
+
+    if ( BOUNDSL( I, exc->storeSize ) )
+    {
+      if ( exc->pedantic_hinting )
+      {
+        ARRAY_BOUND_ERROR;
+      }
+    }
+    else
+      exc->storage[I] = args[1];
+  }
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* WCVTP[]:      Write CVT in Pixel units                                */
+  /* Opcode range: 0x44                                                    */
+  /* Stack:        f26.6 uint32 -->                                        */
+  /*                                                                       */
+  static void
+  Ins_WCVTP( INS_ARG )
+  {
+    FT_ULong  I = (FT_ULong)args[0];
+
+
+    if ( BOUNDSL( I, exc->cvtSize ) )
+    {
+      if ( exc->pedantic_hinting )
+      {
+        ARRAY_BOUND_ERROR;
+      }
+    }
+    else
+      CUR_Func_write_cvt( I, args[1] );
+  }
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* WCVTF[]:      Write CVT in Funits                                     */
+  /* Opcode range: 0x70                                                    */
+  /* Stack:        uint32 uint32 -->                                       */
+  /*                                                                       */
+  static void
+  Ins_WCVTF( INS_ARG )
+  {
+    FT_ULong  I = (FT_ULong)args[0];
+
+
+    if ( BOUNDSL( I, exc->cvtSize ) )
+    {
+      if ( exc->pedantic_hinting )
+      {
+        ARRAY_BOUND_ERROR;
+      }
+    }
+    else
+      exc->cvt[I] = FT_MulFix( args[1], exc->tt_metrics.scale );
+  }
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* RCVT[]:       Read CVT                                                */
+  /* Opcode range: 0x45                                                    */
+  /* Stack:        uint32 --> f26.6                                        */
+  /*                                                                       */
+  static void
+  Ins_RCVT( INS_ARG )
+  {
+    FT_ULong  I = (FT_ULong)args[0];
+
+
+    if ( BOUNDSL( I, exc->cvtSize ) )
+    {
+      if ( exc->pedantic_hinting )
+      {
+        ARRAY_BOUND_ERROR;
+      }
+      else
+        args[0] = 0;
+    }
+    else
+      args[0] = CUR_Func_read_cvt( I );
   }
 
 
@@ -6517,11 +6845,6 @@
         FT_Long*  args   = exc->stack + exc->args;
         FT_Byte   opcode = exc->opcode;
 
-
-#undef  ARRAY_BOUND_ERROR
-#define ARRAY_BOUND_ERROR  goto Set_Invalid_Ref
-
-
         switch ( opcode )
         {
         case 0x00:  /* SVTCA y  */
@@ -6530,38 +6853,7 @@
         case 0x03:  /* SPvTCA x */
         case 0x04:  /* SFvTCA y */
         case 0x05:  /* SFvTCA x */
-          {
-            FT_Short  AA, BB;
-
-
-            AA = (FT_Short)( ( opcode & 1 ) << 14 );
-            BB = (FT_Short)( AA ^ 0x4000 );
-
-            if ( opcode < 4 )
-            {
-              exc->GS.projVector.x = AA;
-              exc->GS.projVector.y = BB;
-
-              exc->GS.dualVector.x = AA;
-              exc->GS.dualVector.y = BB;
-            }
-            else
-            {
-              GUESS_VECTOR( projVector );
-            }
-
-            if ( ( opcode & 2 ) == 0 )
-            {
-              exc->GS.freeVector.x = AA;
-              exc->GS.freeVector.y = BB;
-            }
-            else
-            {
-              GUESS_VECTOR( freeVector );
-            }
-
-            COMPUTE_Funcs();
-          }
+          Ins_SxTCAy( exc, args, opcode );
           break;
 
         case 0x06:  /* SPvTL // */
@@ -6590,71 +6882,19 @@
           break;
 
         case 0x0A:  /* SPvFS */
-          {
-            FT_Short  S;
-            FT_Long   X, Y;
-
-
-            /* Only use low 16bits, then sign extend */
-            S = (FT_Short)args[1];
-            Y = (FT_Long)S;
-            S = (FT_Short)args[0];
-            X = (FT_Long)S;
-
-            NORMalize( X, Y, &exc->GS.projVector );
-
-            exc->GS.dualVector = exc->GS.projVector;
-            GUESS_VECTOR( freeVector );
-            COMPUTE_Funcs();
-          }
+          Ins_SPVFS( exc, args );
           break;
 
         case 0x0B:  /* SFvFS */
-          {
-            FT_Short  S;
-            FT_Long   X, Y;
-
-
-            /* Only use low 16bits, then sign extend */
-            S = (FT_Short)args[1];
-            Y = (FT_Long)S;
-            S = (FT_Short)args[0];
-            X = S;
-
-            NORMalize( X, Y, &exc->GS.freeVector );
-            GUESS_VECTOR( projVector );
-            COMPUTE_Funcs();
-          }
+          Ins_SFVFS( exc, args );
           break;
 
         case 0x0C:  /* GPV */
-#ifdef TT_CONFIG_OPTION_UNPATENTED_HINTING
-          if ( exc->face->unpatented_hinting )
-          {
-            args[0] = exc->GS.both_x_axis ? 0x4000 : 0;
-            args[1] = exc->GS.both_x_axis ? 0 : 0x4000;
-          }
-          else
-#endif
-          {
-            args[0] = exc->GS.projVector.x;
-            args[1] = exc->GS.projVector.y;
-          }
+          Ins_GPV( exc, args );
           break;
 
         case 0x0D:  /* GFV */
-#ifdef TT_CONFIG_OPTION_UNPATENTED_HINTING
-          if ( exc->face->unpatented_hinting )
-          {
-            args[0] = exc->GS.both_x_axis ? 0x4000 : 0;
-            args[1] = exc->GS.both_x_axis ? 0 : 0x4000;
-          }
-          else
-#endif
-          {
-            args[0] = exc->GS.freeVector.x;
-            args[1] = exc->GS.freeVector.y;
-          }
+          Ins_GFV( exc, args );
           break;
 
         case 0x0E:  /* SFvTPv */
@@ -6721,14 +6961,7 @@
           break;
 
         case 0x1C:  /* JMPR */
-          if ( args[0] == 0 && exc->args == 0 )
-            exc->error = FT_THROW( Bad_Argument );
-          exc->IP += args[0];
-          if ( exc->IP < 0                                           ||
-               ( exc->callTop > 0                                  &&
-                 exc->IP > exc->callStack[exc->callTop - 1].Def->end ) )
-            exc->error = FT_THROW( Bad_Argument );
-          exc->step_ins = FALSE;
+          Ins_JMPR( exc, args );
           break;
 
         case 0x1D:  /* SCVTCI */
@@ -6770,21 +7003,7 @@
           break;
 
         case 0x25:  /* CINDEX */
-          {
-            FT_Long  L;
-
-
-            L = args[0];
-
-            if ( L <= 0 || L > exc->args )
-            {
-              if ( exc->pedantic_hinting )
-                exc->error = FT_THROW( Invalid_Reference );
-              args[0] = 0;
-            }
-            else
-              args[0] = exc->stack[exc->args - L];
-          }
+          Ins_CINDEX( exc, args );
           break;
 
         case 0x26:  /* MINDEX */
@@ -6880,114 +7099,19 @@
           break;
 
         case 0x42:  /* WS */
-          {
-            FT_ULong  I = (FT_ULong)args[0];
-
-
-            if ( BOUNDSL( I, exc->storeSize ) )
-            {
-              if ( exc->pedantic_hinting )
-              {
-                ARRAY_BOUND_ERROR;
-              }
-            }
-            else
-              exc->storage[I] = args[1];
-          }
-          break;
-
-      Set_Invalid_Ref:
-            exc->error = FT_THROW( Invalid_Reference );
+          Ins_WS( exc, args );
           break;
 
         case 0x43:  /* RS */
-          {
-#ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
-            FT_ULong  I = (FT_ULong)args[0];
-
-
-            if ( BOUNDSL( I, exc->storeSize ) )
-            {
-              if ( exc->pedantic_hinting )
-                ARRAY_BOUND_ERROR;
-              else
-                args[0] = 0;
-            }
-            else
-            {
-              /* subpixel hinting - avoid Typeman Dstroke and */
-              /* IStroke and Vacuform rounds                  */
-
-              if ( SUBPIXEL_HINTING                           &&
-                   exc->ignore_x_mode                          &&
-                   ( ( I == 24                            &&
-                       ( exc->face->sph_found_func_flags &
-                         ( SPH_FDEF_SPACING_1 |
-                           SPH_FDEF_SPACING_2 )         ) ) ||
-                     ( I == 22                      &&
-                       ( exc->sph_in_func_flags    &
-                         SPH_FDEF_TYPEMAN_STROKES ) )       ||
-                     ( I == 8                             &&
-                       ( exc->face->sph_found_func_flags &
-                         SPH_FDEF_VACUFORM_ROUND_1      ) &&
-                         exc->iup_called                   ) ) )
-                args[0] = 0;
-              else
-                args[0] = exc->storage[I];
-            }
-#else /* !TT_CONFIG_OPTION_SUBPIXEL_HINTING */
-            FT_ULong  I = (FT_ULong)args[0];
-
-
-            if ( BOUNDSL( I, exc->storeSize ) )
-            {
-              if ( exc->pedantic_hinting )
-              {
-                ARRAY_BOUND_ERROR;
-              }
-              else
-                args[0] = 0;
-            }
-            else
-              args[0] = exc->storage[I];
-#endif /* !TT_CONFIG_OPTION_SUBPIXEL_HINTING */
-          }
+          Ins_RS( exc, args );
           break;
 
         case 0x44:  /* WCVTP */
-          {
-            FT_ULong  I = (FT_ULong)args[0];
-
-
-            if ( BOUNDSL( I, exc->cvtSize ) )
-            {
-              if ( exc->pedantic_hinting )
-              {
-                ARRAY_BOUND_ERROR;
-              }
-            }
-            else
-              CUR_Func_write_cvt( I, args[1] );
-          }
+          Ins_WCVTP( exc, args );
           break;
 
         case 0x45:  /* RCVT */
-          {
-            FT_ULong  I = (FT_ULong)args[0];
-
-
-            if ( BOUNDSL( I, exc->cvtSize ) )
-            {
-              if ( exc->pedantic_hinting )
-              {
-                ARRAY_BOUND_ERROR;
-              }
-              else
-                args[0] = 0;
-            }
-            else
-              args[0] = CUR_Func_read_cvt( I );
-          }
+          Ins_RCVT( exc, args );
           break;
 
         case 0x46:  /* GC */
@@ -7148,20 +7272,7 @@
           break;
 
         case 0x70:  /* WCVTF */
-          {
-            FT_ULong  I = (FT_ULong)args[0];
-
-
-            if ( BOUNDSL( I, exc->cvtSize ) )
-            {
-              if ( exc->pedantic_hinting )
-              {
-                ARRAY_BOUND_ERROR;
-              }
-            }
-            else
-              exc->cvt[I] = FT_MulFix( args[1], exc->tt_metrics.scale );
-          }
+          Ins_WCVTF( exc, args );
           break;
 
         case 0x71:  /* DELTAP2 */
@@ -7189,30 +7300,12 @@
 
         case 0x78:  /* JROT */
           if ( args[1] != 0 )
-          {
-            if ( args[0] == 0 && exc->args == 0 )
-              exc->error = FT_THROW( Bad_Argument );
-            exc->IP += args[0];
-            if ( exc->IP < 0                                           ||
-                 ( exc->callTop > 0                                  &&
-                   exc->IP > exc->callStack[exc->callTop - 1].Def->end ) )
-              exc->error = FT_THROW( Bad_Argument );
-            exc->step_ins = FALSE;
-          }
+            Ins_JMPR( exc, args );
           break;
 
         case 0x79:  /* JROF */
           if ( args[1] == 0 )
-          {
-            if ( args[0] == 0 && exc->args == 0 )
-              exc->error = FT_THROW( Bad_Argument );
-            exc->IP += args[0];
-            if ( exc->IP < 0                                           ||
-                 ( exc->callTop > 0                                  &&
-                   exc->IP > exc->callStack[exc->callTop - 1].Def->end ) )
-              exc->error = FT_THROW( Bad_Argument );
-            exc->step_ins = FALSE;
-          }
+            Ins_JMPR( exc, args );
           break;
 
         case 0x7A:  /* ROFF */
