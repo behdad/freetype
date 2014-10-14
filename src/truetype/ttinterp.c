@@ -2684,12 +2684,12 @@
   /*************************************************************************/
 
 #define ARRAY_BOUND_ERROR                         \
-    {                                             \
+    do {                                          \
       exc->error = FT_THROW( Invalid_Reference ); \
       return;                                     \
-    }
+    } while (0)
 
-  static FT_Bool
+  static void
   Ins_SxTCAy( INS_ARG )
   {
     FT_Short  AA, BB;
@@ -3851,9 +3851,7 @@
     if ( BOUNDSL( I, exc->storeSize ) )
     {
       if ( exc->pedantic_hinting )
-      {
         ARRAY_BOUND_ERROR;
-      }
       else
         args[0] = 0;
     }
@@ -3877,9 +3875,7 @@
     if ( BOUNDSL( I, exc->storeSize ) )
     {
       if ( exc->pedantic_hinting )
-      {
         ARRAY_BOUND_ERROR;
-      }
     }
     else
       exc->storage[I] = args[1];
@@ -3900,9 +3896,7 @@
     if ( BOUNDSL( I, exc->cvtSize ) )
     {
       if ( exc->pedantic_hinting )
-      {
         ARRAY_BOUND_ERROR;
-      }
     }
     else
       exc->func_write_cvt( exc, I, args[1] );
@@ -3924,9 +3918,7 @@
     if ( BOUNDSL( I, exc->cvtSize ) )
     {
       if ( exc->pedantic_hinting )
-      {
         ARRAY_BOUND_ERROR;
-      }
     }
     else
       exc->cvt[I] = FT_MulFix( args[1], exc->tt_metrics.scale );
@@ -3948,9 +3940,7 @@
     if ( BOUNDSL( I, exc->cvtSize ) )
     {
       if ( exc->pedantic_hinting )
-      {
         ARRAY_BOUND_ERROR;
-      }
       else
         args[0] = 0;
     }
