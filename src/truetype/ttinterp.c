@@ -6659,10 +6659,6 @@
 #endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
 
 
-#ifdef TT_CONFIG_OPTION_STATIC_RASTER
-    cur = *exc;
-#endif
-
 #ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
     exc->iup_called = FALSE;
 #endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
@@ -7421,20 +7417,12 @@
 
   LNo_Error_:
 
-#ifdef TT_CONFIG_OPTION_STATIC_RASTER
-    *exc = cur;
-#endif
-
     return FT_Err_Ok;
 
   LErrorCodeOverflow_:
     exc->error = FT_THROW( Code_Overflow );
 
   LErrorLabel_:
-
-#ifdef TT_CONFIG_OPTION_STATIC_RASTER
-    *exc = cur;
-#endif
 
     /* If any errors have occurred, function tables may be broken. */
     /* Force a re-execution of `prep' and `fpgm' tables if no      */
