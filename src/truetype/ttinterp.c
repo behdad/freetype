@@ -81,82 +81,16 @@
             TT_INTERPRETER_VERSION_38 )
 
 
-  /*************************************************************************/
-  /*                                                                       */
-  /* The following macros hide the use of exc and exc, to        */
-  /* increase readability of the code.                                     */
-  /*                                                                       */
-  /*************************************************************************/
-
-
-#define SKIP_Code() \
-          SkipCode( exc )
-
-#define GET_ShortIns() \
-          GetShortIns( exc )
-
-#define NORMalize( x, y, v ) \
-          Normalize( exc, x, y, v )
-
-#define SET_SuperRound( scale, flags ) \
-          SetSuperRound( exc, scale, flags )
-
-#define ROUND_None( d, c ) \
-          Round_None( exc, d, c )
-
-#define INS_Goto_CodeRange( range, ip ) \
-          Ins_Goto_CodeRange( exc, range, ip )
-
-#define CUR_Func_move( z, p, d ) \
-          exc->func_move( exc, z, p, d )
-
-#define CUR_Func_move_orig( z, p, d ) \
-          exc->func_move_orig( exc, z, p, d )
-
-#define CUR_Func_round( d, c ) \
-          exc->func_round( exc, d, c )
-
-#define CUR_Func_cur_ppem() \
-          exc->func_cur_ppem( exc )
-
-#define CUR_Func_read_cvt( index ) \
-          exc->func_read_cvt( exc, index )
-
-#define CUR_Func_write_cvt( index, val ) \
-          exc->func_write_cvt( exc, index, val )
-
-#define CUR_Func_move_cvt( index, val ) \
-          exc->func_move_cvt( exc, index, val )
-
-#define CURRENT_Ratio() \
-          Current_Ratio( exc )
-
-#define INS_SxVTL( a, b, c, d ) \
-          Ins_SxVTL( exc, a, b, c, d )
-
-#define COMPUTE_Funcs() \
-          Compute_Funcs( exc )
-
-#define COMPUTE_Round( a ) \
-          Compute_Round( exc, a )
-
-#define COMPUTE_Point_Displacement( a, b, c, d ) \
-          Compute_Point_Displacement( exc, a, b, c, d )
-
-#define MOVE_Zp2_Point( a, b, c, t ) \
-          Move_Zp2_Point( exc, a, b, c, t )
-
-
-#define CUR_Func_project( v1, v2 )  \
+#define project( v1, v2 )  \
           exc->func_project( exc, (v1)->x - (v2)->x, (v1)->y - (v2)->y )
 
-#define CUR_Func_dualproj( v1, v2 )  \
+#define dualproj( v1, v2 )  \
           exc->func_dualproj( exc, (v1)->x - (v2)->x, (v1)->y - (v2)->y )
 
-#define CUR_fast_project( v ) \
+#define fast_project( v ) \
           exc->func_project( exc, (v)->x, (v)->y )
 
-#define CUR_fast_dualproj( v ) \
+#define fast_dualproj( v ) \
           exc->func_dualproj( exc, (v)->x, (v)->y )
 
 
@@ -1657,7 +1591,7 @@
   FT_CALLBACK_DEF( FT_Long )
   Current_Ppem_Stretched( TT_ExecContext  exc )
   {
-    return FT_MulFix( exc->tt_metrics.ppem, CURRENT_Ratio() );
+    return FT_MulFix( exc->tt_metrics.ppem, Current_Ratio( exc ) );
   }
 
 
@@ -1680,7 +1614,7 @@
   Read_CVT_Stretched( TT_ExecContext  exc,
                       FT_ULong  idx )
   {
-    return FT_MulFix( exc->cvt[idx], CURRENT_Ratio() );
+    return FT_MulFix( exc->cvt[idx], Current_Ratio( exc ) );
   }
 
 
@@ -1698,7 +1632,7 @@
                        FT_ULong    idx,
                        FT_F26Dot6  value )
   {
-    exc->cvt[idx] = FT_DivFix( value, CURRENT_Ratio() );
+    exc->cvt[idx] = FT_DivFix( value, Current_Ratio( exc ) );
   }
 
 
@@ -1716,7 +1650,7 @@
                       FT_ULong    idx,
                       FT_F26Dot6  value )
   {
-    exc->cvt[idx] += FT_DivFix( value, CURRENT_Ratio() );
+    exc->cvt[idx] += FT_DivFix( value, Current_Ratio( exc ) );
   }
 
 
@@ -2787,7 +2721,7 @@
       GUESS_VECTOR( freeVector );
     }
 
-    COMPUTE_Funcs();
+    Compute_Funcs( exc );
   }
 
   static FT_Bool
@@ -2834,7 +2768,7 @@
       A = -C;
     }
 
-    NORMalize( A, B, Vec );
+    Normalize( exc, A, B, Vec );
 
     return SUCCESS;
   }
@@ -2859,11 +2793,11 @@
     S = (FT_Short)args[0];
     X = (FT_Long)S;
 
-    NORMalize( X, Y, &exc->GS.projVector );
+    Normalize( exc, X, Y, &exc->GS.projVector );
 
     exc->GS.dualVector = exc->GS.projVector;
     GUESS_VECTOR( freeVector );
-    COMPUTE_Funcs();
+    Compute_Funcs( exc );
   }
 
 
@@ -2886,9 +2820,9 @@
     S = (FT_Short)args[0];
     X = S;
 
-    NORMalize( X, Y, &exc->GS.freeVector );
+    Normalize( exc, X, Y, &exc->GS.freeVector );
     GUESS_VECTOR( projVector );
-    COMPUTE_Funcs();
+    Compute_Funcs( exc );
   }
 
   /*************************************************************************/
@@ -3076,7 +3010,7 @@
 
     do
     {
-      if ( SKIP_Code() == FAILURE )
+      if ( SkipCode( exc ) == FAILURE )
         return;
 
       switch ( exc->opcode )
@@ -3116,7 +3050,7 @@
 
     do
     {
-      if ( SKIP_Code() == FAILURE )
+      if ( SkipCode( exc ) == FAILURE )
         return;
 
       switch ( exc->opcode )
@@ -3326,7 +3260,7 @@
     /* Now skip the whole function definition. */
     /* We don't allow nested IDEFS & FDEFs.    */
 
-    while ( SKIP_Code() == SUCCESS )
+    while ( SkipCode( exc ) == SUCCESS )
     {
 
 #ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
@@ -3494,8 +3428,7 @@
     }
     else
       /* Loop through the current function */
-      INS_Goto_CodeRange( pRec->Caller_Range,
-                          pRec->Caller_IP );
+      Ins_Goto_CodeRange( exc, pRec->Caller_Range, pRec->Caller_IP );
 
     /* Exit the current call frame.                      */
 
@@ -3584,8 +3517,7 @@
 
     exc->callTop++;
 
-    INS_Goto_CodeRange( def->range,
-                        def->start );
+    Ins_Goto_CodeRange( exc, def->range, def->start );
 
     exc->step_ins = FALSE;
 
@@ -3672,7 +3604,7 @@
 
       exc->callTop++;
 
-      INS_Goto_CodeRange( def->range, def->start );
+      Ins_Goto_CodeRange( exc, def->range, def->start );
 
       exc->step_ins = FALSE;
     }
@@ -3735,7 +3667,7 @@
     /* Now skip the whole function definition. */
     /* We don't allow nested IDEFs & FDEFs.    */
 
-    while ( SKIP_Code() == SUCCESS )
+    while ( SkipCode( exc ) == SUCCESS )
     {
       switch ( exc->opcode )
       {
@@ -3809,7 +3741,7 @@
     exc->IP += 2;
 
     for ( K = 0; K < L; K++ )
-      args[K] = GET_ShortIns();
+      args[K] = GetShortIns( exc );
 
     exc->step_ins = FALSE;
     exc->new_top += L;
@@ -3864,7 +3796,7 @@
     exc->IP++;
 
     for ( K = 0; K < L; K++ )
-      args[K] = GET_ShortIns();
+      args[K] = GetShortIns( exc );
 
     exc->step_ins = FALSE;
   }
@@ -3972,7 +3904,7 @@
       }
     }
     else
-      CUR_Func_write_cvt( I, args[1] );
+      exc->func_write_cvt( exc, I, args[1] );
   }
 
 
@@ -4022,7 +3954,7 @@
         args[0] = 0;
     }
     else
-      args[0] = CUR_Func_read_cvt( I );
+      args[0] = exc->func_read_cvt( exc, I );
   }
 
 
@@ -4062,9 +3994,9 @@
     else
     {
       if ( exc->opcode & 1 )
-        R = CUR_fast_dualproj( &exc->zp2.org[L] );
+        R = fast_dualproj( &exc->zp2.org[L] );
       else
-        R = CUR_fast_project( &exc->zp2.cur[L] );
+        R = fast_project( &exc->zp2.cur[L] );
     }
 
     args[0] = R;
@@ -4097,9 +4029,9 @@
       return;
     }
 
-    K = CUR_fast_project( &exc->zp2.cur[L] );
+    K = fast_project( &exc->zp2.cur[L] );
 
-    CUR_Func_move( &exc->zp2, L, args[1] - K );
+    exc->func_move( exc, &exc->zp2, L, args[1] - K );
 
     /* UNDOCUMENTED!  The MS rasterizer does that with */
     /* twilight points (confirmed by Greg Hitchcock)   */
@@ -4143,7 +4075,7 @@
     else
     {
       if ( exc->opcode & 1 )
-        D = CUR_Func_project( exc->zp0.cur + L, exc->zp1.cur + K );
+        D = project( exc->zp0.cur + L, exc->zp1.cur + K );
       else
       {
         /* XXX: UNDOCUMENTED: twilight zone special case */
@@ -4154,7 +4086,7 @@
           FT_Vector*  vec2 = exc->zp1.org + K;
 
 
-          D = CUR_Func_dualproj( vec1, vec2 );
+          D = dualproj( vec1, vec2 );
         }
         else
         {
@@ -4165,7 +4097,7 @@
           if ( exc->metrics.x_scale == exc->metrics.y_scale )
           {
             /* this should be faster */
-            D = CUR_Func_dualproj( vec1, vec2 );
+            D = dualproj( vec1, vec2 );
             D = FT_MulFix( D, exc->metrics.x_scale );
           }
           else
@@ -4176,7 +4108,7 @@
             vec.x = FT_MulFix( vec1->x - vec2->x, exc->metrics.x_scale );
             vec.y = FT_MulFix( vec1->y - vec2->y, exc->metrics.y_scale );
 
-            D = CUR_fast_dualproj( &vec );
+            D = fast_dualproj( &vec );
           }
         }
       }
@@ -4245,7 +4177,7 @@
       A = -C;
     }
 
-    NORMalize( A, B, &exc->GS.dualVector );
+    Normalize( exc, A, B, &exc->GS.dualVector );
 
     {
       FT_Vector*  v1 = exc->zp1.cur + p2;
@@ -4269,11 +4201,11 @@
       A = -C;
     }
 
-    NORMalize( A, B, &exc->GS.projVector );
+    Normalize( exc, A, B, &exc->GS.projVector );
 
     GUESS_VECTOR( freeVector );
 
-    COMPUTE_Funcs();
+    Compute_Funcs( exc );
   }
 
 
@@ -4634,7 +4566,7 @@
     *zone = zp;
     *refp = p;
 
-    d = CUR_Func_project( zp.cur + p, zp.org + p );
+    d = project( zp.cur + p, zp.org + p );
 
 #ifdef TT_CONFIG_OPTION_UNPATENTED_HINTING
     if ( exc->face->unpatented_hinting )
@@ -4729,7 +4661,7 @@
       goto Fail;
     }
 
-    if ( COMPUTE_Point_Displacement( &dx, &dy, &zp, &refp ) )
+    if ( Compute_Point_Displacement( exc, &dx, &dy, &zp, &refp ) )
       return;
 
     while ( exc->GS.loop > 0 )
@@ -4750,10 +4682,10 @@
       /* doesn't follow Cleartype spec but produces better result */
       if ( SUBPIXEL_HINTING  &&
            exc->ignore_x_mode )
-        MOVE_Zp2_Point( point, 0, dy, TRUE );
+        Move_Zp2_Point( exc, point, 0, dy, TRUE );
       else
 #endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
-        MOVE_Zp2_Point( point, dx, dy, TRUE );
+        Move_Zp2_Point( exc, point, dx, dy, TRUE );
 
       exc->GS.loop--;
     }
@@ -4795,7 +4727,7 @@
       return;
     }
 
-    if ( COMPUTE_Point_Displacement( &dx, &dy, &zp, &refp ) )
+    if ( Compute_Point_Displacement( exc, &dx, &dy, &zp, &refp ) )
       return;
 
     if ( contour == 0 )
@@ -4814,7 +4746,7 @@
     for ( i = start; i < limit; i++ )
     {
       if ( zp.cur != exc->zp2.cur || refp != i )
-        MOVE_Zp2_Point( i, dx, dy, TRUE );
+        Move_Zp2_Point( exc, i, dx, dy, TRUE );
     }
   }
 
@@ -4843,7 +4775,7 @@
       return;
     }
 
-    if ( COMPUTE_Point_Displacement( &dx, &dy, &zp, &refp ) )
+    if ( Compute_Point_Displacement( exc, &dx, &dy, &zp, &refp ) )
       return;
 
     /* XXX: UNDOCUMENTED! SHZ doesn't move the phantom points.     */
@@ -4861,7 +4793,7 @@
     for ( i = 0; i < limit; i++ )
     {
       if ( zp.cur != exc->zp2.cur || refp != i )
-        MOVE_Zp2_Point( i, dx, dy, FALSE );
+        Move_Zp2_Point( exc, i, dx, dy, FALSE );
     }
   }
 
@@ -4947,7 +4879,7 @@
           if ( !exc->face->sph_compatibility_mode &&
                exc->GS.freeVector.y != 0          )
           {
-            MOVE_Zp2_Point( point, dx, dy, TRUE );
+            Move_Zp2_Point( exc, point, dx, dy, TRUE );
 
             /* save new point */
             if ( exc->GS.freeVector.y != 0 )
@@ -4959,7 +4891,7 @@
                    ( B1 & 63 ) != 0                                          &&
                    ( B2 & 63 ) != 0                                          &&
                     B1 != B2                                                 )
-                MOVE_Zp2_Point( point, -dx, -dy, TRUE );
+                Move_Zp2_Point( exc, point, -dx, -dy, TRUE );
             }
           }
           else if ( exc->face->sph_compatibility_mode )
@@ -4980,7 +4912,7 @@
                   ( ( exc->is_composite && exc->GS.freeVector.y != 0 ) ||
                     ( exc->zp2.tags[point] & FT_CURVE_TAG_TOUCH_Y )   ||
                     ( exc->sph_tweak_flags & SPH_TWEAK_DO_SHPIX )     )   )
-              MOVE_Zp2_Point( point, 0, dy, TRUE );
+              Move_Zp2_Point( exc, point, 0, dy, TRUE );
 
             /* save new point */
             if ( exc->GS.freeVector.y != 0 )
@@ -4991,21 +4923,21 @@
               if ( ( B1 & 63 ) == 0 &&
                    ( B2 & 63 ) != 0 &&
                    B1 != B2         )
-                MOVE_Zp2_Point( point, 0, -dy, TRUE );
+                Move_Zp2_Point( exc, point, 0, -dy, TRUE );
             }
           }
           else if ( exc->sph_in_func_flags & SPH_FDEF_TYPEMAN_DIAGENDCTRL )
-            MOVE_Zp2_Point( point, dx, dy, TRUE );
+            Move_Zp2_Point( exc, point, dx, dy, TRUE );
         }
         else
-          MOVE_Zp2_Point( point, dx, dy, TRUE );
+          Move_Zp2_Point( exc, point, dx, dy, TRUE );
       }
 
     Skip:
 
 #else /* !TT_CONFIG_OPTION_SUBPIXEL_HINTING */
 
-        MOVE_Zp2_Point( point, dx, dy, TRUE );
+        Move_Zp2_Point( exc, point, dx, dy, TRUE );
 
 #endif /* !TT_CONFIG_OPTION_SUBPIXEL_HINTING */
 
@@ -5061,12 +4993,12 @@
     if ( exc->GS.gep1 == 0 )
     {
       exc->zp1.org[point] = exc->zp0.org[exc->GS.rp0];
-      CUR_Func_move_orig( &exc->zp1, point, args[1] );
+      exc->func_move_orig( exc, &exc->zp1, point, args[1] );
       exc->zp1.cur[point] = exc->zp1.org[point];
     }
 
-    distance = CUR_Func_project( exc->zp1.cur + point,
-                                 exc->zp0.cur + exc->GS.rp0 );
+    distance = project( exc->zp1.cur + point,
+                        exc->zp0.cur + exc->GS.rp0 );
 
 #ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
     /* subpixel hinting - make MSIRP respect CVT cut-in; */
@@ -5077,7 +5009,7 @@
       distance = args[1];
 #endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
 
-    CUR_Func_move( &exc->zp1, point, args[1] - distance );
+    exc->func_move( exc, &exc->zp1, point, args[1] - distance );
 
     exc->GS.rp1 = exc->GS.rp0;
     exc->GS.rp2 = point;
@@ -5112,24 +5044,24 @@
 
     if ( ( exc->opcode & 1 ) != 0 )
     {
-      cur_dist = CUR_fast_project( &exc->zp0.cur[point] );
+      cur_dist = fast_project( &exc->zp0.cur[point] );
 #ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
       if ( SUBPIXEL_HINTING         &&
            exc->ignore_x_mode        &&
            exc->GS.freeVector.x != 0 )
-        distance = ROUND_None(
+        distance = Round_None( exc,
                      cur_dist,
                      exc->tt_metrics.compensations[0] ) - cur_dist;
       else
 #endif
-        distance = CUR_Func_round(
+        distance = exc->func_round( exc,
                      cur_dist,
                      exc->tt_metrics.compensations[0] ) - cur_dist;
     }
     else
       distance = 0;
 
-    CUR_Func_move( &exc->zp0, point, distance );
+    exc->func_move( exc, &exc->zp0, point, distance );
 
     exc->GS.rp0 = point;
     exc->GS.rp1 = point;
@@ -5193,7 +5125,7 @@
     /*                                                                    */
     /* Confirmed by Greg Hitchcock.                                       */
 
-    distance = CUR_Func_read_cvt( cvtEntry );
+    distance = exc->func_read_cvt( exc, cvtEntry );
 
     if ( exc->GS.gep0 == 0 )   /* If in twilight zone */
     {
@@ -5219,7 +5151,7 @@
       distance = 0;
 #endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
 
-    org_dist = CUR_fast_project( &exc->zp0.cur[point] );
+    org_dist = fast_project( &exc->zp0.cur[point] );
 
     if ( ( exc->opcode & 1 ) != 0 )   /* rounding and control cut-in flag */
     {
@@ -5230,15 +5162,15 @@
       if ( SUBPIXEL_HINTING         &&
            exc->ignore_x_mode        &&
            exc->GS.freeVector.x != 0 )
-        distance = ROUND_None( distance,
+        distance = Round_None( exc, distance,
                                exc->tt_metrics.compensations[0] );
       else
 #endif
-        distance = CUR_Func_round( distance,
+        distance = exc->func_round( exc, distance,
                                    exc->tt_metrics.compensations[0] );
     }
 
-    CUR_Func_move( &exc->zp0, point, distance - org_dist );
+    exc->func_move( exc, &exc->zp0, point, distance - org_dist );
 
   Fail:
     exc->GS.rp0 = point;
@@ -5290,7 +5222,7 @@
       FT_Vector*  vec2 = &exc->zp0.org[exc->GS.rp0];
 
 
-      org_dist = CUR_Func_dualproj( vec1, vec2 );
+      org_dist = dualproj( vec1, vec2 );
     }
     else
     {
@@ -5301,7 +5233,7 @@
       if ( exc->metrics.x_scale == exc->metrics.y_scale )
       {
         /* this should be faster */
-        org_dist = CUR_Func_dualproj( vec1, vec2 );
+        org_dist = dualproj( vec1, vec2 );
         org_dist = FT_MulFix( org_dist, exc->metrics.x_scale );
       }
       else
@@ -5312,7 +5244,7 @@
         vec.x = FT_MulFix( vec1->x - vec2->x, exc->metrics.x_scale );
         vec.y = FT_MulFix( vec1->y - vec2->y, exc->metrics.y_scale );
 
-        org_dist = CUR_fast_dualproj( &vec );
+        org_dist = fast_dualproj( &vec );
       }
     }
 
@@ -5335,17 +5267,17 @@
       if ( SUBPIXEL_HINTING         &&
            exc->ignore_x_mode        &&
            exc->GS.freeVector.x != 0 )
-        distance = ROUND_None(
+        distance = Round_None( exc,
                      org_dist,
                      exc->tt_metrics.compensations[exc->opcode & 3] );
       else
 #endif
-      distance = CUR_Func_round(
+      distance = exc->func_round( exc,
                    org_dist,
                    exc->tt_metrics.compensations[exc->opcode & 3] );
     }
     else
-      distance = ROUND_None(
+      distance = Round_None( exc,
                    org_dist,
                    exc->tt_metrics.compensations[exc->opcode & 3] );
 
@@ -5367,10 +5299,10 @@
 
     /* now move the point */
 
-    org_dist = CUR_Func_project( exc->zp1.cur + point,
-                                 exc->zp0.cur + exc->GS.rp0 );
+    org_dist = project( exc->zp1.cur + point,
+                        exc->zp0.cur + exc->GS.rp0 );
 
-    CUR_Func_move( &exc->zp1, point, distance - org_dist );
+    exc->func_move( exc, &exc->zp1, point, distance - org_dist );
 
   Fail:
     exc->GS.rp1 = exc->GS.rp0;
@@ -5433,7 +5365,7 @@
     if ( !cvtEntry )
       cvt_dist = 0;
     else
-      cvt_dist = CUR_Func_read_cvt( cvtEntry - 1 );
+      cvt_dist = exc->func_read_cvt( exc, cvtEntry - 1 );
 
     /* single width test */
 
@@ -5459,10 +5391,10 @@
       exc->zp1.cur[point]   = exc->zp1.org[point];
     }
 
-    org_dist = CUR_Func_dualproj( &exc->zp1.org[point],
-                                  &exc->zp0.org[exc->GS.rp0] );
-    cur_dist = CUR_Func_project ( &exc->zp1.cur[point],
-                                  &exc->zp0.cur[exc->GS.rp0] );
+    org_dist = dualproj( &exc->zp1.org[point],
+                         &exc->zp0.org[exc->GS.rp0] );
+    cur_dist = project ( &exc->zp1.cur[point],
+                         &exc->zp0.cur[exc->GS.rp0] );
 
     /* auto-flip test */
 
@@ -5510,7 +5442,7 @@
           cvt_dist = org_dist;
       }
 
-      distance = CUR_Func_round(
+      distance = exc->func_round( exc,
                    cvt_dist,
                    exc->tt_metrics.compensations[exc->opcode & 3] );
     }
@@ -5528,7 +5460,7 @@
       }
 #endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
 
-      distance = ROUND_None(
+      distance = Round_None( exc,
                    cvt_dist,
                    exc->tt_metrics.compensations[exc->opcode & 3] );
     }
@@ -5569,7 +5501,7 @@
     }
 #endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
 
-    CUR_Func_move( &exc->zp1, point, distance - cur_dist );
+    exc->func_move( exc, &exc->zp1, point, distance - cur_dist );
 
 #ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
     if ( SUBPIXEL_HINTING )
@@ -5593,7 +5525,7 @@
       }
 
       if ( reverse_move )
-        CUR_Func_move( &exc->zp1, point, -( distance - cur_dist ) );
+        exc->func_move( exc, &exc->zp1, point, -( distance - cur_dist ) );
     }
 
 #endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
@@ -5658,10 +5590,10 @@
       }
       else
       {
-        distance = CUR_Func_project( exc->zp1.cur + point,
-                                     exc->zp0.cur + exc->GS.rp0 );
+        distance = project( exc->zp1.cur + point,
+                            exc->zp0.cur + exc->GS.rp0 );
 
-        CUR_Func_move( &exc->zp1, point, -distance );
+        exc->func_move( exc, &exc->zp1, point, -distance );
       }
 
       exc->GS.loop--;
@@ -5791,11 +5723,11 @@
       return;
     }
 
-    distance = CUR_Func_project( exc->zp0.cur + p2,
-                                 exc->zp1.cur + p1 ) / 2;
+    distance = project( exc->zp0.cur + p2,
+                        exc->zp1.cur + p1 ) / 2;
 
-    CUR_Func_move( &exc->zp1, p1, distance );
-    CUR_Func_move( &exc->zp0, p2, -distance );
+    exc->func_move( exc, &exc->zp1, p1, distance );
+    exc->func_move( exc, &exc->zp0, p2, -distance );
   }
 
 
@@ -5860,11 +5792,11 @@
     else
     {
       if ( twilight )
-        old_range = CUR_Func_dualproj( &exc->zp1.org[exc->GS.rp2],
-                                       orus_base );
+        old_range = dualproj( &exc->zp1.org[exc->GS.rp2],
+                              orus_base );
       else if ( exc->metrics.x_scale == exc->metrics.y_scale )
-        old_range = CUR_Func_dualproj( &exc->zp1.orus[exc->GS.rp2],
-                                       orus_base );
+        old_range = dualproj( &exc->zp1.orus[exc->GS.rp2],
+                              orus_base );
       else
       {
         FT_Vector  vec;
@@ -5875,10 +5807,10 @@
         vec.y = FT_MulFix( exc->zp1.orus[exc->GS.rp2].y - orus_base->y,
                            exc->metrics.y_scale );
 
-        old_range = CUR_fast_dualproj( &vec );
+        old_range = fast_dualproj( &vec );
       }
 
-      cur_range = CUR_Func_project ( &exc->zp1.cur[exc->GS.rp2], cur_base );
+      cur_range = project ( &exc->zp1.cur[exc->GS.rp2], cur_base );
     }
 
     for ( ; exc->GS.loop > 0; --exc->GS.loop )
@@ -5899,9 +5831,9 @@
       }
 
       if ( twilight )
-        org_dist = CUR_Func_dualproj( &exc->zp2.org[point], orus_base );
+        org_dist = dualproj( &exc->zp2.org[point], orus_base );
       else if ( exc->metrics.x_scale == exc->metrics.y_scale )
-        org_dist = CUR_Func_dualproj( &exc->zp2.orus[point], orus_base );
+        org_dist = dualproj( &exc->zp2.orus[point], orus_base );
       else
       {
         FT_Vector  vec;
@@ -5912,10 +5844,10 @@
         vec.y = FT_MulFix( exc->zp2.orus[point].y - orus_base->y,
                            exc->metrics.y_scale );
 
-        org_dist = CUR_fast_dualproj( &vec );
+        org_dist = fast_dualproj( &vec );
       }
 
-      cur_dist = CUR_Func_project( &exc->zp2.cur[point], cur_base );
+      cur_dist = project( &exc->zp2.cur[point], cur_base );
 
       if ( org_dist )
       {
@@ -5945,7 +5877,7 @@
       else
         new_dist = 0;
 
-      CUR_Func_move( &exc->zp2, (FT_UShort)point, new_dist - cur_dist );
+      exc->func_move( exc, &exc->zp2, (FT_UShort)point, new_dist - cur_dist );
     }
 
   Fail:
@@ -6272,7 +6204,7 @@
     }
 #endif
 
-    P = (FT_ULong)CUR_Func_cur_ppem();
+    P = (FT_ULong)exc->func_cur_ppem( exc );
     nump = (FT_ULong)args[0];   /* some points theoretically may occur more
                                    than once, thus UShort isn't enough */
 
@@ -6339,7 +6271,7 @@
             if ( !exc->ignore_x_mode                                   ||
                  ( exc->sph_tweak_flags & SPH_TWEAK_ALWAYS_DO_DELTAP ) ||
                  ( exc->is_composite && exc->GS.freeVector.y != 0 )     )
-              CUR_Func_move( &exc->zp0, A, B );
+              exc->func_move( exc, &exc->zp0, A, B );
 
             /* Otherwise apply subpixel hinting and */
             /* compatibility mode rules             */
@@ -6355,7 +6287,7 @@
               /* This messes up dejavu and may not be needed... */
               if ( !exc->face->sph_compatibility_mode &&
                    exc->GS.freeVector.y != 0          )
-                CUR_Func_move( &exc->zp0, A, B );
+                exc->func_move( exc, &exc->zp0, A, B );
               else
 #endif /* 0 */
 
@@ -6374,7 +6306,7 @@
                 /* IUP has not been called, and point is touched on Y. */
                 if ( !exc->iup_called                            &&
                      ( exc->zp0.tags[A] & FT_CURVE_TAG_TOUCH_Y ) )
-                  CUR_Func_move( &exc->zp0, A, B );
+                  exc->func_move( exc, &exc->zp0, A, B );
               }
 
               B2 = (FT_UShort)exc->zp0.cur[A].y;
@@ -6388,13 +6320,13 @@
                          SPH_TWEAK_SKIP_NONPIXEL_Y_MOVES_DELTAP ) &&
                        ( B1 & 63 ) != 0                           &&
                        ( B2 & 63 ) != 0                           ) ) )
-                CUR_Func_move( &exc->zp0, A, -B );
+                exc->func_move( exc, &exc->zp0, A, -B );
             }
           }
           else
 #endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
 
-            CUR_Func_move( &exc->zp0, A, B );
+            exc->func_move( exc, &exc->zp0, A, B );
         }
       }
       else
@@ -6441,7 +6373,7 @@
     }
 #endif
 
-    P = (FT_ULong)CUR_Func_cur_ppem();
+    P = (FT_ULong)exc->func_cur_ppem( exc );
     nump = (FT_ULong)args[0];
 
     for ( k = 1; k <= nump; k++ )
@@ -6494,7 +6426,7 @@
             B++;
           B = B * 64 / ( 1L << exc->GS.delta_shift );
 
-          CUR_Func_move_cvt( A, B );
+          exc->func_move_cvt( exc, A, B );
         }
       }
     }
@@ -6661,7 +6593,7 @@
         call->Cur_Count    = 1;
         call->Def          = def;
 
-        INS_Goto_CodeRange( def->range, def->start );
+        Ins_Goto_CodeRange( exc, def->range, def->start );
 
         exc->step_ins = FALSE;
         return;
@@ -6753,8 +6685,8 @@
       exc->func_move_cvt  = Move_CVT;
     }
 
-    COMPUTE_Funcs();
-    COMPUTE_Round( (FT_Byte)exc->GS.round_state );
+    Compute_Funcs( exc );
+    Compute_Round( exc, (FT_Byte)exc->GS.round_state );
 
     do
     {
@@ -6858,26 +6790,28 @@
 
         case 0x06:  /* SPvTL // */
         case 0x07:  /* SPvTL +  */
-          if ( INS_SxVTL( (FT_UShort)args[1],
+          if ( Ins_SxVTL( exc,
+                          (FT_UShort)args[1],
                           (FT_UShort)args[0],
                           exc->opcode,
                           &exc->GS.projVector ) == SUCCESS )
           {
             exc->GS.dualVector = exc->GS.projVector;
             GUESS_VECTOR( freeVector );
-            COMPUTE_Funcs();
+            Compute_Funcs( exc );
           }
           break;
 
         case 0x08:  /* SFvTL // */
         case 0x09:  /* SFvTL +  */
-          if ( INS_SxVTL( (FT_UShort)args[1],
+          if ( Ins_SxVTL( exc,
+                          (FT_UShort)args[1],
                           (FT_UShort)args[0],
                           exc->opcode,
                           &exc->GS.freeVector ) == SUCCESS )
           {
             GUESS_VECTOR( projVector );
-            COMPUTE_Funcs();
+            Compute_Funcs( exc );
           }
           break;
 
@@ -6900,7 +6834,7 @@
         case 0x0E:  /* SFvTPv */
           GUESS_VECTOR( projVector );
           exc->GS.freeVector = exc->GS.projVector;
-          COMPUTE_Funcs();
+          Compute_Funcs( exc );
           break;
 
         case 0x0F:  /* ISECT  */
@@ -7129,7 +7063,7 @@
           break;
 
         case 0x4B:  /* MPPEM */
-          args[0] = CUR_Func_cur_ppem();
+          args[0] = exc->func_cur_ppem( exc );
           break;
 
         case 0x4C:  /* MPS */
@@ -7139,7 +7073,7 @@
 #if 0
           args[0] = exc->metrics.pointSize;
 #else
-          args[0] = CUR_Func_cur_ppem();
+          args[0] = exc->func_cur_ppem( exc );
 #endif
           break;
 
@@ -7180,11 +7114,11 @@
           break;
 
         case 0x56:  /* ODD */
-          args[0] = ( ( CUR_Func_round( args[0], 0 ) & 127 ) == 64 );
+          args[0] = ( ( exc->func_round( exc, args[0], 0 ) & 127 ) == 64 );
           break;
 
         case 0x57:  /* EVEN */
-          args[0] = ( ( CUR_Func_round( args[0], 0 ) & 127 ) == 0 );
+          args[0] = ( ( exc->func_round( exc, args[0], 0 ) & 127 ) == 0 );
           break;
 
         case 0x58:  /* IF */
@@ -7258,7 +7192,7 @@
         case 0x69:  /* ROUND */
         case 0x6A:  /* ROUND */
         case 0x6B:  /* ROUND */
-          args[0] = CUR_Func_round(
+          args[0] = exc->func_round( exc,
                       args[0],
                       exc->tt_metrics.compensations[exc->opcode - 0x68] );
           break;
@@ -7267,7 +7201,7 @@
         case 0x6D:  /* NROUND */
         case 0x6E:  /* NRRUND */
         case 0x6F:  /* NROUND */
-          args[0] = ROUND_None( args[0],
+          args[0] = Round_None( exc, args[0],
                                 exc->tt_metrics.compensations[exc->opcode - 0x6C] );
           break;
 
@@ -7287,13 +7221,13 @@
           break;
 
         case 0x76:  /* SROUND */
-          SET_SuperRound( 0x4000, args[0] );
+          SetSuperRound( exc, 0x4000, args[0] );
           exc->GS.round_state = TT_Round_Super;
           exc->func_round = (TT_Round_Func)Round_Super;
           break;
 
         case 0x77:  /* S45Round */
-          SET_SuperRound( 0x2D41, args[0] );
+          SetSuperRound( exc, 0x2D41, args[0] );
           exc->GS.round_state = TT_Round_Super_45;
           exc->func_round = (TT_Round_Func)Round_Super_45;
           break;
@@ -7438,7 +7372,7 @@
                 callrec->Cur_Count    = 1;
                 callrec->Def          = def;
 
-                if ( INS_Goto_CodeRange( def->range, def->start ) == FAILURE )
+                if ( Ins_Goto_CodeRange( exc, def->range, def->start ) == FAILURE )
                   goto LErrorLabel_;
 
                 goto LSuiteLabel_;
