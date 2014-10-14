@@ -2690,9 +2690,10 @@
     }
 
   static FT_Bool
-  Ins_SxTCAy( INS_ARG, FT_Int opcode )
+  Ins_SxTCAy( INS_ARG )
   {
     FT_Short  AA, BB;
+    FT_Int    opcode = exc->opcode;
 
 
     AA = (FT_Short)( ( opcode & 1 ) << 14 );
@@ -2728,12 +2729,12 @@
   Ins_SxVTL( TT_ExecContext  exc,
              FT_UShort       aIdx1,
              FT_UShort       aIdx2,
-             FT_Int          aOpc,
              FT_UnitVector*  Vec )
   {
     FT_Long     A, B, C;
     FT_Vector*  p1;
     FT_Vector*  p2;
+    FT_Int     aOpc = exc->opcode;
 
 
     if ( BOUNDS( aIdx1, exc->zp2.n_points ) ||
@@ -6775,9 +6776,8 @@
 
       {
         FT_Long*  args   = exc->stack + exc->args;
-        FT_Byte   opcode = exc->opcode;
 
-        switch ( opcode )
+        switch ( exc->opcode )
         {
         case 0x00:  /* SVTCA y  */
         case 0x01:  /* SVTCA x  */
@@ -6785,7 +6785,7 @@
         case 0x03:  /* SPvTCA x */
         case 0x04:  /* SFvTCA y */
         case 0x05:  /* SFvTCA x */
-          Ins_SxTCAy( exc, args, opcode );
+          Ins_SxTCAy( exc, args );
           break;
 
         case 0x06:  /* SPvTL // */
@@ -6793,7 +6793,6 @@
           if ( Ins_SxVTL( exc,
                           (FT_UShort)args[1],
                           (FT_UShort)args[0],
-                          exc->opcode,
                           &exc->GS.projVector ) == SUCCESS )
           {
             exc->GS.dualVector = exc->GS.projVector;
@@ -6807,7 +6806,6 @@
           if ( Ins_SxVTL( exc,
                           (FT_UShort)args[1],
                           (FT_UShort)args[0],
-                          exc->opcode,
                           &exc->GS.freeVector ) == SUCCESS )
           {
             GUESS_VECTOR( projVector );
@@ -7327,13 +7325,13 @@
           break;
 
         default:
-          if ( opcode >= 0xE0 )
+          if ( exc->opcode >= 0xE0 )
             Ins_MIRP( exc, args );
-          else if ( opcode >= 0xC0 )
+          else if ( exc->opcode >= 0xC0 )
             Ins_MDRP( exc, args );
-          else if ( opcode >= 0xB8 )
+          else if ( exc->opcode >= 0xB8 )
             Ins_PUSHW( exc, args );
-          else if ( opcode >= 0xB0 )
+          else if ( exc->opcode >= 0xB0 )
             Ins_PUSHB( exc, args );
           else
             Ins_UNKNOWN( exc, args );
