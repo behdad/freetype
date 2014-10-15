@@ -7053,7 +7053,6 @@
         case 0x4C:  /* MPS */
           /* Note: The pointSize should be irrelevant in a given font program; */
           /*        we thus decide to return only the ppem.                     */
-          /* XXX behdad: really?!?! This doesn't make sense. */
 #if 0
           args[0] = exc->metrics.pointSize;
 #else
