@@ -277,9 +277,7 @@
 
     AF_LoaderRec loader[1];
 
-    error = af_loader_init(loader, module->root.library->memory);
-    if ( error )
-      return error;
+    af_loader_init(loader, module->root.library->memory);
 
     error = af_loader_load_glyph( loader, module, slot->face,
                                   glyph_index, load_flags );
