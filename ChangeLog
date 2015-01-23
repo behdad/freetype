@@ -1,3 +1,347 @@
+2015-01-23  Behdad Esfahbod  <behdad@behdad.org>
+
+	[raster] Handle `FT_RASTER_FLAG_AA' correctly.
+
+	This fixes a breakage caused by the commit `[raster] Remove
+	5-level gray AA mode from monochrome rasterizer.'.
+
+	Problem reported by Markus Trippelsdorf <markus@trippelsdorf.de> and
+	octoploid <octoploid@yandex.com>.
+
+	* src/raster/ftraster.c (ft_black_render): Handle
+	`FT_RASTER_FLAG_AA'.
+
+	* src/raster/ftrend1.c (ft_raster1_render): Remove gray AA mode
+	remnants.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	* src/autofit/afmodule.c (af_autofitter_done): Fix compiler warning.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[autofit] Add embedded array of segments and edges.
+
+	Avoids multiple mallocs per typical glyphs.
+
+	With this and recent changes to avoid mallocs, the thread-safe
+	stack-based loader is now as fast as the previous model that had one
+	cached singleton.
+
+	* src/autofit/afhints.h (AF_SEGMENTS_EMBEDDED, AF_EDGES_EMBEDDED):
+	New macros.
+	(AF_AxisHintsRec): Add two arrays for segments and edges.
+
+	* src/autofit/afhints.c (af_axis_hints_new_segment): Only allocate
+	data if number of segments exceeds given threshold value.
+	(af_axis_hints_new_edge):  Only allocate data if number of edges
+	exceeds given threshold value.
+	(af_glyph_hints_done): Updated.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[autofit] Add embedded arrays for points and contours.
+
+	This avoids at least two malloc calls for typical glyphs.
+
+	* src/autofit/afhints.h (AF_POINTS_EMBEDDED, AF_CONTOURS_EMBEDDED):
+	New macros.
+	(AF_GlyphHintsRec): Add two arrays for contours and points.
+
+	* src/autofit/afhints.c (af_glyph_hints_init, af_glyph_hints_done):
+	Updated.
+	(af_glyph_hints_reload): Only allocate data if number of contours or
+	points exceeds given threshold values.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[autofit] Allocate hints object on the stack.
+
+	This avoids one malloc per load.
+
+	* src/autofit/afloader.h (AF_LoaderRec): Change type of `hints' to
+	`AF_GlyphHints'.
+	Update prototype.
+
+	* src/autofit/afloader.c (af_loader_init): Use `AF_GlyphHints'
+	parameter instead of `FT_Memory'.
+	(af_loader_done): Directly reset `load_hints'.
+	(af_loader_load_g): Updated.
+
+	* src/autofit/afmodule.c (af_autofitter_load_glyph): Use local
+	`hints' object.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[autofit] Reuse slot glyph loader.
+
+	No need to create a new glyph loader; we can reuse the one from
+	`slot->internal->loader'.  It's hard to tell why it was written that
+	way originally, but new code looks sound and correct to me, and
+	avoids lots of allocations.
+
+	* src/autofit/afloader.c (af_loader_init): Change return type to
+	`void'.
+	Don't call `FT_GlyphLoader_New'.
+	(af_loader_reset): Don't call `FT_GlyphLoader_Rewind'.
+	(af_loader_load_g): Update code to use `internal->loader', which
+	doesn't need copying of data.
+
+	* src/autofit/afloader.h (AF_LoaderRec): Remove `gloader' member.
+	Update prototype.
+
+	* src/autofit/afmodule.c (af_autofitter_load_glyph): Updated.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[autofit] Remove (unused) support for composite glyphs.
+
+	We never have to deal with composite glyphs in the autohinter, as
+	those will be loaded into FORMAT_OUTLINE by the recursed
+	`FT_Load_Glyph' function.
+
+	In the rare cases that FT_LOAD_NO_RECURSE is set, it will imply
+	FT_LOAD_NO_SCALE as per `FT_Load_Glyph', which then implies
+	FT_LOAD_NO_HINTING:
+
+	  /* resolve load flags dependencies */
+
+	  if ( load_flags & FT_LOAD_NO_RECURSE )
+	    load_flags |= FT_LOAD_NO_SCALE         |
+	                  FT_LOAD_IGNORE_TRANSFORM;
+
+	  if ( load_flags & FT_LOAD_NO_SCALE )
+	  {
+	    load_flags |= FT_LOAD_NO_HINTING |
+	                  FT_LOAD_NO_BITMAP;
+
+	    load_flags &= ~FT_LOAD_RENDER;
+	  }
+
+	and as such the auto-hinter is never called.  Thus, the recursion in
+	`af_loader_load_g' never actually happens.  So remove the depth
+	counter as well.
+
+	* src/autofit/afloader.c (af_loader_load_g): Remove `depth'
+	parameter.
+	<FT_GLYPH_FORMAT_COMPOSITE>: Remove associated code.
+	(af_loader_load_glyph): Updated.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[raster] Fix uninitialized memory access.
+
+	Apparently `ras.cProfile' might be uninitialized.  This will be the
+	case if `ras.top == ras.cProfile->offset', as can be seen in
+	`End_Profile'.  The overshoot code introduced in a change `Fix B/W
+	rasterization of subglyphs with different drop-out modes.' (from
+	2009-06-18) violated this, accessing `ras.cProfile->flags'
+	unconditionally just before calling `End_Profile' (which then
+	detected that `cProfile' is uninitialized and didn't touch it).
+
+	This was harmless, and was not detected by valgrind before because
+	the objects were allocated on the `raster_pool', which was always
+	initialized.  With recent change to allocate raster buffers on the
+	stack, valgrind now reported this invalid access.
+
+	* src/raster/ftraster.c (Convert_Glyph): Don't access an
+	uninitialized `cProfile'.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[smooth] Fix uninitialized memory access.
+
+	Looks like `ras.span_y' could always be used without initialization.
+	This was never detected by valgrind before because the library-wide
+	`raster_pool' was used for the worker object and `raster_pool' was
+	originally zero'ed.  But subsequent reuses of it were using `span_y'
+	uninitialized.  With the recent change to not use `render_pool' and
+	allocate worker and buffer on the stack, valgrind now detects this
+	uninitialized access.
+
+	* src/smooth/ftgrays.c (gray_raster_render): Initialize
+	`ras.span_y'.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[base] Don't initialize unused `driver->glyph_loader'.
+
+	* src/base/ftobjs.c (Destroy_Driver): Don't call
+	`FT_GlyphLoader_Done'.
+	(FT_Add_Module): Don't call `FT_GlyphLoader_New'.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[base] Don't allocate `library->raster_pool' anymore.
+
+	It's unused after the following commits:
+
+	  [raster] Allocate render pool for mono rasterizer on the stack.
+	  [raster] Remove 5-level gray AA mode from monochrome rasterizer.
+
+	The value of FT_RENDER_POOL_SIZE still serves the purpose it used to
+	serve, which is, to adjust the pool size.  But the pool is now
+	allocated on the stack on demand.
+
+	* src/base/ftobjs.c (FT_New_Library, FT_Done_Library): Implement.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[base] Do not reorder library->renderers upon use.
+
+	Instead of keeping `library->renderers' in a MRU order, just leave
+	it as-is.  The MRU machinery wasn't thread-safe.
+
+	With this patch, rasterizing glyphs from different faces from
+	different threads doesn't fail choosing rasterizer
+	(FT_Err_Cannot_Render_Glyph).
+
+	Easiest to see that crash was to add a `printf' (or otherwise let
+	thread yield in FT_Throw with debugging enabled).
+
+	* src/base/ftobjs.c (FT_Render_Glyph_Internal), src/base/ftoutln.c
+	(FT_Outline_Render): Don't call `FT_Set_Renderer'.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[raster] Allocate render pool for mono rasterizer on the stack.
+
+	Instead of using the `render_pool' member of `FT_Library' that is
+	provided down to the rasterizer, completely ignore that and allocate
+	needed objects on the stack instead.
+
+	With this patch, rasterizing glyphs from different faces from
+	different threads doesn't crash in the monochrome rasterizer.
+
+	* src/raster/ftraster.c (black_TRaster): Remove `buffer',
+	`buffer_size', and `worker' members.
+
+	(ft_black_render): Create `buffer' locally.
+	(ft_black_reset): Updated.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[raster] Remove 5-level gray AA mode from monochrome rasterizer.
+
+	It was off by default and couldn't be turned on at runtime.  And the
+	smooth rasterizer superceded it over ten years ago.  No point in
+	keeping.  Comments suggested that it was there for compatibility
+	with FreeType 1.
+
+	550 lines down.
+
+	* src/raster/ftraster.c (FT_RASTER_OPTION_ANTI_ALIASING,
+	RASTER_GRAY_LINES): Remove macros and all associated code.
+
+	(black_TWorker): Remove `gray_min_x' and `gray_max_x'.
+	(black_TRaster): Remove `grays' and `gray_width'.
+
+	(Vertical_Sweep_Init, Vertical_Sweep_Span, Vertical_Sweep_Drop,
+	ft_black_render): Updated.
+
+	* src/raster/ftrend1.c (ft_raster1_render): Simplify code.
+	(ft_raster5_renderer_class): Removed.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[smooth] Allocate render pool for smooth rasterizer on the stack.
+
+	Instead of using the `render_pool' member of `FT_Library' that is
+	provided down to the rasterizer, completely ignore that and allocate
+	needed objects on the stack instead.
+
+	With this patch, rasterizing glyphs from different faces from
+	different threads doesn't crash in the smooth rasterizer.
+
+	Bugs:
+
+	  https://bugzilla.redhat.com/show_bug.cgi?id=678397
+	  https://bugzilla.redhat.com/show_bug.cgi?id=1004315
+	  https://bugzilla.redhat.com/show_bug.cgi?id=1165471
+	  https://bugs.freedesktop.org/show_bug.cgi?id=69034
+
+	* src/smooth/ftgrays.c (gray_TRaster): Remove `buffer',
+	`buffer_size', `band_size', and `worker' members.
+
+	(gray_raster_render): Create `buffer', `buffer_size', and
+	`band_size' locally.
+	(gray_raster_reset): Updated.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[truetype] Allocate TT_ExecContext in TT_Size instead of TT_Driver.
+
+	Previously the code had stipulation for using a per-TT_Size exec
+	context if `size->debug' was true.  But there was no way that
+	`size->debug' could *ever* be true.  As such, the code was always
+	using the singleton `TT_ExecContext' that was stored in `TT_Driver'.
+	This was, clearly, not threadsafe.
+
+	With this patch, loading glyphs from different faces from different
+	threads doesn't crash in the bytecode loader code.
+
+	* src/truetype/ttobjs.h (TT_SizeRec): Remove `debug' member.
+	(TT_DriverRec): Remove `context' member.
+
+	* src/truetype/ttobjs.c (tt_size_run_fpgm, tt_size_run_prep): Remove
+	`TT_ExecContext' code related to a global `TT_Driver' object.
+
+	(tt_driver_done): Don't remove `TT_ExecContext' object here but ...
+	(tt_size_done_bytecode): ... here.
+
+	(tt_driver_init): Don't create `TT_ExecContext' object here but ...
+	(tt_size_init_bytecode): ... here, only on demand.
+
+	* src/truetype/ttinterp.c (TT_Run_Context): Remove defunct debug
+	code.
+	(TT_New_Context): Remove `TT_ExecContext' code related to a global
+	`TT_Driver' object.
+
+	* src/truetype/ttinterp.h: Updated.
+
+	* src/truetype/ttgload.c (TT_Hint_Glyph, tt_loader_init): Updated.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	[autofit] Allocate AF_Loader on the stack instead of AF_Module.
+
+	Stop sharing a global `AF_Loader'.  Allocate one on the stack during
+	glyph load.
+
+	Right now this results in about 25% slowdown, to be fixed in a
+	following commit.
+
+	With this patch loading glyphs from different faces from different
+	threads doesn't immediately crash in the autohinting loader code.
+
+	Bugs:
+
+	  https://bugzilla.redhat.com/show_bug.cgi?id=1164941
+
+	* src/autofit/afloader.c (af_loader_init): Pass
+	`AF_Loader' and `FT_Memory' instead of `AF_Module' as arguments.
+	(af_loader_reset, af_loader_load_glyph): Also pass `loader' as
+	argument.
+	(af_loader_done): Use `AF_Loader' instead of `AF_Module' as
+	argument.
+
+	* src/autofit/afmodule.c (af_autofitter_init): Don't call
+	`af_loader_init'.
+	(af_autofitter_done): Don't call `af_loader_done'.
+	(af_autofitter_load_glyph): Use a local `AF_Loader' object.
+
+	* src/autofit/afloader.h: Include `afmodule.h'.
+	Update prototypes.
+	Move typedef for `AF_Module' to...
+
+	* src/autofit/afmodule.h: ... this place.
+	No longer include `afloader.h'.
+
+2015-01-14  Behdad Esfahbod  <behdad@behdad.org>
+
+	* src/type42/t42objs.h (T42_DriverRec): Remove unused member.
+
+>>>>>>> 264b5e4... [raster] Handle `FT_RASTER_FLAG_AA' correctly.
 2015-01-12  Werner Lemberg  <wl@gnu.org>
 
 	Fix Savannah bug #43976.
