@@ -307,6 +307,12 @@ FT_BEGIN_HEADER
 
   } FT_Bitmap_Size;
 
+  typedef struct  FT_Glyph_Layer_
+  {
+    FT_UInt   glyph_index;
+    FT_UInt   color_index;
+  } FT_Glyph_Layer;
+
 
   /*************************************************************************/
   /*************************************************************************/

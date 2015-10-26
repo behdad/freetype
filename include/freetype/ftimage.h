@@ -777,6 +777,9 @@ FT_BEGIN_HEADER
   /*      generally want to access the `outline' field of the              */
   /*      @FT_GlyphSlotRec structure to read it.                           */
   /*                                                                       */
+  /*    FT_GLYPH_FORMAT_LAYERED ::                                         */
+  /*      XXX.                                                             */
+  /*                                                                       */
   /*    FT_GLYPH_FORMAT_PLOTTER ::                                         */
   /*      The glyph image is a vectorial path with no inside and outside   */
   /*      contours.  Some Type~1 fonts, like those in the Hershey family,  */
@@ -791,6 +794,7 @@ FT_BEGIN_HEADER
     FT_IMAGE_TAG( FT_GLYPH_FORMAT_COMPOSITE, 'c', 'o', 'm', 'p' ),
     FT_IMAGE_TAG( FT_GLYPH_FORMAT_BITMAP,    'b', 'i', 't', 's' ),
     FT_IMAGE_TAG( FT_GLYPH_FORMAT_OUTLINE,   'o', 'u', 't', 'l' ),
+    FT_IMAGE_TAG( FT_GLYPH_FORMAT_LAYERED,   'c', 'o', 'l', 'r' ),
     FT_IMAGE_TAG( FT_GLYPH_FORMAT_PLOTTER,   'p', 'l', 'o', 't' )
 
   } FT_Glyph_Format;
