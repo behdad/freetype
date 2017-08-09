@@ -59,20 +59,23 @@
 
     FT_UNUSED( png );
 
-    typedef unsigned short v42 __attribute__ ((vector_size (8)));
-    typedef unsigned char v81 __attribute__ ((vector_size (8)));
+    typedef unsigned short v82 __attribute__ ((vector_size (16)));
 
-    limit = row_info->rowbytes - 4 + 1;
-    for ( ; i < limit; i += 4 )
+    limit = row_info->rowbytes - 8 + 1;
+    for ( ; i < limit; i += 8 )
     {
       unsigned char*  base  = &data[i];
-      v42 s = {base[0], base[1], base[2], 0};
-      s *= base[3];
+      v82 s = {base[0], base[1], base[2], 0, base[4], base[5], base[6], 0};
+      v82 a = {base[3], base[3], base[3], 0, base[7], base[7], base[7], 0};
+      s *= a;
       s += 0x80;
       s = ( s + (s >> 8) ) >> 8;
       base[0] = s[2];
       base[1] = s[1];
       base[2] = s[0];
+      base[4] = s[6];
+      base[5] = s[5];
+      base[6] = s[4];
     }
 
     limit = row_info->rowbytes;
