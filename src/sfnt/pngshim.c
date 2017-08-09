@@ -55,12 +55,28 @@
                     png_row_infop  row_info,
                     png_bytep      data )
   {
-    unsigned int  i;
+    unsigned int i = 0, limit;
 
     FT_UNUSED( png );
 
+    typedef unsigned short v42 __attribute__ ((vector_size (8)));
+    typedef unsigned char v81 __attribute__ ((vector_size (8)));
 
-    for ( i = 0; i < row_info->rowbytes; i += 4 )
+    limit = row_info->rowbytes - 4 + 1;
+    for ( ; i < limit; i += 4 )
+    {
+      unsigned char*  base  = &data[i];
+      v42 s = {base[0], base[1], base[2], 0};
+      s *= base[3];
+      s += 0x80;
+      s = ( s + (s >> 8) ) >> 8;
+      base[0] = s[2];
+      base[1] = s[1];
+      base[2] = s[0];
+    }
+
+    limit = row_info->rowbytes;
+    for ( ; i < limit; i += 4 )
     {
       unsigned char*  base  = &data[i];
       unsigned int    alpha = base[3];
