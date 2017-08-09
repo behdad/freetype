@@ -49,7 +49,7 @@
   }
 
 
-  /* Premultiplies data and converts RGBA bytes => native endian. */
+  /* Premultiplies data and converts RGBA bytes => BGRA. */
   static void
   premultiply_data( png_structp    png,
                     png_row_infop  row_info,
@@ -59,24 +59,36 @@
 
     FT_UNUSED( png );
 
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__OPTIMIZE__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     typedef unsigned short v82 __attribute__ ((vector_size (16)));
 
-    limit = row_info->rowbytes - 8 + 1;
-    for ( ; i < limit; i += 8 )
+    limit = row_info->rowbytes - 16 + 1;
+    for ( ; i < limit; i += 16 )
     {
-      unsigned char*  base  = &data[i];
-      v82 s = {base[0], base[1], base[2], 0, base[4], base[5], base[6], 0};
-      v82 a = {base[3], base[3], base[3], 0, base[7], base[7], base[7], 0};
-      s *= a;
-      s += 0x80;
-      s = ( s + (s >> 8) ) >> 8;
-      base[0] = s[2];
-      base[1] = s[1];
-      base[2] = s[0];
-      base[4] = s[6];
-      base[5] = s[5];
-      base[6] = s[4];
+      char *base = &data[i];
+      v82 s;
+      memcpy (&s, base, 16);                    /* RGBA RGBA RGBA RGBA */
+      v82 s0 = s & 0xFF;                        /*  R B  R B  R B  R B */
+      v82 s1 = s >> 8;                          /*  G A  G A  G A  G A */
+
+      v82 ma = {1, 1, 3, 3, 5, 5, 7, 7};
+      v82 a  = __builtin_shuffle (s1, ma);      /*  A A  A A  A A  A A */
+      v82 o1 = {0, 0xFF, 0, 0xFF, 0, 0xFF, 0, 0xFF};
+      s1 |= o1;                                 /*  G 1  G 1  G 1  G 1 */
+      v82 m0 = {1, 0, 3, 2, 5, 4, 7, 6};
+      s0 = __builtin_shuffle (s0, m0);          /*  B R  B R  B R  B R */
+
+      s0 *= a;
+      s1 *= a;
+      s0 += 0x80;
+      s1 += 0x80;
+      s0 = ( s0 + (s0 >> 8) ) >> 8;
+      s1 = ( s1 + (s1 >> 8) ) >> 8;
+
+      s = s0 | (s1 << 8);
+      memcpy (base, &s, 16);
     }
+#endif
 
     limit = row_info->rowbytes;
     for ( ; i < limit; i += 4 )
