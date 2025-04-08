@@ -24,22 +24,52 @@
  * Google Author(s): Behdad Esfahbod
  */
 
-#ifndef FT_HB_FT_H
-#define FT_HB_FT_H
+#include <freetype/freetype.h>
+#include <freetype/internal/ftmemory.h>
+
+#ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
 
 #include "ft-hb.h"
 
+#include <dlfcn.h>
 
-FT_BEGIN_HEADER
+ft_hb_funcs_t * ft_hb_funcs (void)
+{
+  static ft_hb_funcs_t *funcs = NULL;
+  if (funcs) return funcs;
 
-FT_LOCAL(hb_font_t *)
-ft_hb_ft_font_create (FT_Face           ft_face,
-                      hb_destroy_func_t destroy);
+#if 0
+  if ( FT_NEW ( funcs ) )
+    return NULL;
+#endif
+
+  /* Load the HarfBuzz library */
+  void *lib = dlopen("libharfbuzz.so", RTLD_LAZY);
+  if (!lib)
+    goto fail;
 
 
-FT_END_HEADER
+#define FT_HB_API(name) \
+  funcs->name = dlsym(lib, #name);
+  FT_HB_APIS
+#undef FT_HB_API
 
-#endif /* FT_HB_FT_H */
+  return NULL;
 
+fail:
+#if 0
+  if (funcs)
+    FT_FREE (funcs);
+#endif
+  funcs = NULL;
+  return NULL;
+}
+
+#else /* !FT_CONFIG_OPTION_USE_HARFBUZZ */
+
+/* ANSI C doesn't like empty source files */
+typedef int  ft_hb_dummy_;
+
+#endif /* !FT_CONFIG_OPTION_USE_HARFBUZZ */
 
 /* END */
