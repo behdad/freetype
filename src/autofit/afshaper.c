@@ -124,7 +124,7 @@
     if ( !globals || !style_class || !gstyles )
       return FT_THROW( Invalid_Argument );
 
-    face = hb_font_get_face( globals->hb_font );
+    face = hb(font_get_face)( globals->hb_font );
 
     coverage_tags = coverages[style_class->coverage];
     script        = scripts[style_class->script];
@@ -137,8 +137,8 @@
       hb_tag_t      tags[3];
 
 
-      hb_ot_tags_from_script_and_language( script,
-                                           HB_LANGUAGE_INVALID,
+      hb(ot_tags_from_script_and_language)( script,
+                                           HB_TAG_NONE,
                                            &tags_count,
                                            tags,
                                            NULL,
@@ -170,15 +170,15 @@
         goto Exit;
     }
 
-    gsub_lookups = hb_set_create();
-    hb_ot_layout_collect_lookups( face,
+    gsub_lookups = hb(set_create)();
+    hb(ot_layout_collect_lookups)( face,
                                   HB_OT_TAG_GSUB,
                                   script_tags,
                                   NULL,
                                   coverage_tags,
                                   gsub_lookups );
 
-    if ( hb_set_is_empty( gsub_lookups ) )
+    if ( hb(set_is_empty)( gsub_lookups ) )
       goto Exit; /* nothing to do */
 
     FT_TRACE4(( "GSUB lookups (style `%s'):\n",
@@ -189,8 +189,8 @@
     count = 0;
 #endif
 
-    gsub_glyphs = hb_set_create();
-    for ( idx = HB_SET_VALUE_INVALID; hb_set_next( gsub_lookups, &idx ); )
+    gsub_glyphs = hb(set_create)();
+    for ( idx = HB_SET_VALUE_INVALID; hb(set_next)( gsub_lookups, &idx ); )
     {
 #ifdef FT_DEBUG_LEVEL_TRACE
       FT_TRACE4(( " %d", idx ));
@@ -198,7 +198,7 @@
 #endif
 
       /* get output coverage of GSUB feature */
-      hb_ot_layout_lookup_collect_glyphs( face,
+      hb(ot_layout_lookup_collect_glyphs)( face,
                                           HB_OT_TAG_GSUB,
                                           idx,
                                           NULL,
@@ -218,8 +218,8 @@
                 af_style_names[style_class->style] ));
     FT_TRACE4(( " " ));
 
-    gpos_lookups = hb_set_create();
-    hb_ot_layout_collect_lookups( face,
+    gpos_lookups = hb(set_create)();
+    hb(ot_layout_collect_lookups)( face,
                                   HB_OT_TAG_GPOS,
                                   script_tags,
                                   NULL,
@@ -230,8 +230,8 @@
     count = 0;
 #endif
 
-    gpos_glyphs = hb_set_create();
-    for ( idx = HB_SET_VALUE_INVALID; hb_set_next( gpos_lookups, &idx ); )
+    gpos_glyphs = hb(set_create)();
+    for ( idx = HB_SET_VALUE_INVALID; hb(set_next)( gpos_lookups, &idx ); )
     {
 #ifdef FT_DEBUG_LEVEL_TRACE
       FT_TRACE4(( " %d", idx ));
@@ -239,7 +239,7 @@
 #endif
 
       /* get input coverage of GPOS feature */
-      hb_ot_layout_lookup_collect_glyphs( face,
+      hb(ot_layout_lookup_collect_glyphs)( face,
                                           HB_OT_TAG_GPOS,
                                           idx,
                                           NULL,
@@ -281,13 +281,13 @@
 
           GET_UTF8_CHAR( ch, p );
 
-          for ( idx = HB_SET_VALUE_INVALID; hb_set_next( gsub_lookups,
+          for ( idx = HB_SET_VALUE_INVALID; hb(set_next)( gsub_lookups,
                                                          &idx ); )
           {
             hb_codepoint_t  gidx = FT_Get_Char_Index( globals->face, ch );
 
 
-            if ( hb_ot_layout_lookup_would_substitute( face, idx,
+            if ( hb(ot_layout_lookup_would_substitute)( face, idx,
                                                        &gidx, 1, 1 ) )
             {
               found = 1;
@@ -352,14 +352,14 @@
      *
      */
     if ( style_class->coverage != AF_COVERAGE_DEFAULT )
-      hb_set_subtract( gsub_glyphs, gpos_glyphs );
+      hb(set_subtract)( gsub_glyphs, gpos_glyphs );
 
 #ifdef FT_DEBUG_LEVEL_TRACE
     FT_TRACE4(( "  glyphs without GPOS data (`*' means already assigned)" ));
     count = 0;
 #endif
 
-    for ( idx = HB_SET_VALUE_INVALID; hb_set_next( gsub_glyphs, &idx ); )
+    for ( idx = HB_SET_VALUE_INVALID; hb(set_next)( gsub_glyphs, &idx ); )
     {
 #ifdef FT_DEBUG_LEVEL_TRACE
       if ( !( count % 10 ) )
@@ -372,7 +372,7 @@
       count++;
 #endif
 
-      /* glyph indices returned by `hb_ot_layout_lookup_collect_glyphs' */
+      /* glyph indices returned by `hb(ot_layout_lookup_collect_glyphs)' */
       /* can be arbitrary: some fonts use fake indices for processing   */
       /* internal to GSUB or GPOS, which is fully valid                 */
       if ( idx >= (hb_codepoint_t)globals->glyph_count )
@@ -397,10 +397,10 @@
 #endif
 
   Exit:
-    hb_set_destroy( gsub_lookups );
-    hb_set_destroy( gsub_glyphs  );
-    hb_set_destroy( gpos_lookups );
-    hb_set_destroy( gpos_glyphs  );
+    hb(set_destroy)( gsub_lookups );
+    hb(set_destroy)( gsub_glyphs  );
+    hb(set_destroy)( gpos_lookups );
+    hb(set_destroy)( gpos_glyphs  );
 
     return FT_Err_Ok;
   }
@@ -442,7 +442,7 @@
   {
     FT_UNUSED( face );
 
-    return (void*)hb_buffer_create();
+    return (void*)hb(buffer_create)();
   }
 
 
@@ -452,7 +452,7 @@
   {
     FT_UNUSED( face );
 
-    hb_buffer_destroy( (hb_buffer_t*)buf );
+    hb(buffer_destroy)( (hb_buffer_t*)buf );
   }
 
 
@@ -480,7 +480,7 @@
     font = metrics->globals->hb_font;
 
     /* we shape at a size of units per EM; this means font units */
-    hb_font_set_scale( font, upem, upem );
+    hb(font_set_scale)( font, upem, upem );
 
     while ( *p == ' ' )
       p++;
@@ -492,15 +492,15 @@
     len = (int)( q - p );
 
     /* feed character(s) to the HarfBuzz buffer */
-    hb_buffer_clear_contents( buf );
-    hb_buffer_add_utf8( buf, p, len, 0, len );
+    hb(buffer_clear_contents)( buf );
+    hb(buffer_add_utf8)( buf, p, len, 0, len );
 
     /* we let HarfBuzz guess the script and writing direction */
-    hb_buffer_guess_segment_properties( buf );
+    hb(buffer_guess_segment_properties)( buf );
 
     /* shape buffer, which means conversion from character codes to */
     /* glyph indices, possibly applying a feature                   */
-    hb_shape( font, buf, feature, feature ? 1 : 0 );
+    hb(shape)( font, buf, feature, feature ? 1 : 0 );
 
     if ( feature )
     {
@@ -517,13 +517,13 @@
       /* glyph indices; otherwise the affected glyph or glyphs aren't     */
       /* available at all in the feature                                  */
 
-      hb_buffer_clear_contents( hb_buf );
-      hb_buffer_add_utf8( hb_buf, p, len, 0, len );
-      hb_buffer_guess_segment_properties( hb_buf );
-      hb_shape( font, hb_buf, NULL, 0 );
+      hb(buffer_clear_contents)( hb_buf );
+      hb(buffer_add_utf8)( hb_buf, p, len, 0, len );
+      hb(buffer_guess_segment_properties)( hb_buf );
+      hb(shape)( font, hb_buf, NULL, 0 );
 
-      ginfo    = hb_buffer_get_glyph_infos( buf, &gcount );
-      hb_ginfo = hb_buffer_get_glyph_infos( hb_buf, &hb_gcount );
+      ginfo    = hb(buffer_get_glyph_infos)( buf, &gcount );
+      hb_ginfo = hb(buffer_get_glyph_infos)( hb_buf, &hb_gcount );
 
       if ( gcount == hb_gcount )
       {
@@ -537,12 +537,12 @@
         if ( i == gcount )
         {
           /* both buffers have identical glyph indices */
-          hb_buffer_clear_contents( buf );
+          hb(buffer_clear_contents)( buf );
         }
       }
     }
 
-    *count = hb_buffer_get_length( buf );
+    *count = hb(buffer_get_length)( buf );
 
 #ifdef FT_DEBUG_LEVEL_TRACE
     if ( feature && *count > 1 )
@@ -569,8 +569,8 @@
     FT_UNUSED( metrics );
 
 
-    ginfo = hb_buffer_get_glyph_infos( buf, &gcount );
-    gpos  = hb_buffer_get_glyph_positions( buf, &gcount );
+    ginfo = hb(buffer_get_glyph_infos)( buf, &gcount );
+    gpos  = hb(buffer_get_glyph_positions)( buf, &gcount );
 
     if ( idx >= gcount )
       return 0;
