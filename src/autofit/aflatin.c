@@ -2781,8 +2781,8 @@
   {
     FT_Int  highest_contour = -1;
 
-    FT_Pos  highest_min_y = 0;
-    FT_Pos  current_min_y = 0;
+    FT_Pos  highest_min_y = 32000;
+    FT_Pos  current_min_y = 32000;
 
     FT_Int  contour;
 
@@ -3173,8 +3173,8 @@
          hints->num_contours >= 2                          )
     {
       FT_Int  highest_contour = -1;
-      FT_Pos  highest_min_y   = 0;
-      FT_Pos  current_min_y   = 0;
+      FT_Pos  highest_min_y   = 32000;
+      FT_Pos  current_min_y   = 32000;
 
       FT_Pos  highest_max_y;
 
@@ -3318,8 +3318,8 @@
               hints->num_contours >= 2                               )
     {
       FT_Int  lowest_contour = -1;
-      FT_Pos  lowest_max_y   = 0;
-      FT_Pos  current_max_y  = 0;
+      FT_Pos  lowest_max_y   = -32000;
+      FT_Pos  current_max_y  = -32000;
 
       FT_Int  contour;
       FT_Pos  adjustment_amount = 0;
