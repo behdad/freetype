@@ -3380,7 +3380,7 @@
 
         } while ( point != first_point );
 
-        if ( min_y <= lowest_max_y - 64 )
+        if ( min_y <= lowest_max_y + 64 )
           adjustment_amount = 64 - ( min_y - lowest_max_y );
       }
 
