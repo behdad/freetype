@@ -2796,6 +2796,11 @@
       if ( !point )
         continue;
 
+      /* Ignore dimensionless contours (i.e., contours with only one or */
+      /* two points).                                                   */
+      if ( first_point->next->next == first_point )
+        continue;
+
       current_min_y = point->y;
 
       do
@@ -3120,6 +3125,9 @@
       AF_Point  p           = first_point;
 
 
+      if ( first_point->next->next == first_point )
+        continue;
+
       do
       {
         p = p->next;
@@ -3208,6 +3216,9 @@
         if ( !point )
           continue;
 
+        if ( first_point->next->next == first_point )
+          continue;
+
         current_min_y = point->y;
 
         do
@@ -3266,6 +3277,9 @@
         point       = hints->contours[contour];
         first_point = point;
         if ( !point )
+          continue;
+
+        if ( first_point->next->next == first_point )
           continue;
 
         max_y = point->y;
@@ -3349,6 +3363,9 @@
         if ( !point )
           continue;
 
+        if ( first_point->next->next == first_point )
+          continue;
+
         current_max_y = point->y;
 
         do
@@ -3378,6 +3395,9 @@
         point       = hints->contours[contour];
         first_point = point;
         if ( !point )
+          continue;
+
+        if ( first_point->next->next == first_point )
           continue;
 
         min_y = point->y;
