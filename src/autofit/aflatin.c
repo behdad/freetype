@@ -3180,7 +3180,9 @@
 
       FT_Int   contour;
       FT_Bool  horizontal_overlap;
-      FT_Pos   adjustment_amount = 0;
+
+      FT_Pos  min_distance = 64;
+      FT_Pos  adjustment_amount;
 
       FT_Bool  is_tilde = af_lookup_tilde_correction_type( reverse_charmap,
                                                            glyph_index );
@@ -3255,6 +3257,7 @@
       for ( contour = 0; contour < hints->num_contours; contour++ )
       {
         FT_Pos  max_y;
+        FT_Pos  distance;
 
 
         if ( contour == highest_contour )
@@ -3274,9 +3277,12 @@
 
         } while ( point != first_point );
 
-        if ( max_y >= highest_min_y - 64 )
-          adjustment_amount = 64 - ( highest_min_y - max_y );
+        distance = highest_min_y - max_y;
+        if ( distance < 64 && distance < min_distance )
+          min_distance = distance;
       }
+
+      adjustment_amount = 64 - min_distance;
 
       /* The vertical separation adjustment potentially undoes a tilde  */
       /* center alignment.  If the vertical adjustment would grid-align */
@@ -3322,7 +3328,9 @@
       FT_Pos  current_max_y  = -32000;
 
       FT_Int  contour;
-      FT_Pos  adjustment_amount = 0;
+
+      FT_Pos  min_distance = 64;
+      FT_Pos  adjustment_amount;
 
       AF_Point  point;
       AF_Point  first_point;
@@ -3361,6 +3369,7 @@
       for ( contour = 0; contour < hints->num_contours; contour++ )
       {
         FT_Pos  min_y;
+        FT_Pos  distance;
 
 
         if ( contour == lowest_contour )
@@ -3380,9 +3389,12 @@
 
         } while ( point != first_point );
 
-        if ( min_y <= lowest_max_y + 64 )
-          adjustment_amount = 64 - ( min_y - lowest_max_y );
+        distance = min_y - lowest_max_y;
+        if ( distance < 64 && distance < min_distance )
+          min_distance = distance;
       }
+
+      adjustment_amount = 64 - min_distance;
 
       FT_TRACE4(( "    Calculated adjustment amount: %ld\n",
                   adjustment_amount ));
