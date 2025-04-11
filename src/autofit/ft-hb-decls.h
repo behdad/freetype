@@ -177,10 +177,10 @@ typedef void (*ft_hb_shape_func_t)(
   unsigned int num_features
 );
 
-typedef void (*ft_hb_version_func_t)(
-  unsigned int* major,
-  unsigned int* minor,
-  unsigned int* micro
+typedef hb_bool_t (*ft_hb_version_at_least_func_t)(
+  unsigned int major,
+  unsigned int minor,
+  unsigned int micro
 );
 
 #endif /* FT_HB_DECLS_H */

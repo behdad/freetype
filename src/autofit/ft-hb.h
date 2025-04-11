@@ -143,10 +143,11 @@ typedef hb_blob_t * (*hb_reference_table_func_t)  (hb_face_t *face, hb_tag_t tag
 	FT_HB_API(hb_set_next) \
 	FT_HB_API(hb_set_subtract) \
 	FT_HB_API(hb_shape) \
-	FT_HB_API(hb_version)
+	FT_HB_API(hb_version_at_least)
 
 
 typedef struct ft_hb_funcs_t {
+  void *lib; /* dlopen() handle. */
 #define FT_HB_API(x) ft_##x##_func_t x;
 FT_HB_APIS
 #undef FT_HB_API
