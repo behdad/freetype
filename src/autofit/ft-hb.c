@@ -43,20 +43,37 @@ ft_hb_funcs_t * ft_hb_funcs (void)
     return NULL;
 #endif
 
-  /* Load the HarfBuzz library */
-  void *lib = dlopen("libharfbuzz.so", RTLD_LAZY);
-  if (!lib)
+  funcs->lib = NULL;
+  ft_hb_version_at_least_func_t version_at_least = dlsym( RTLD_DEFAULT, "hb_version_at_least" );
+  if ( !version_at_least ) {
+    /* Load the HarfBuzz library */
+    funcs->lib = dlopen( "libharfbuzz.so", RTLD_GLOBAL );
+    if ( !funcs->lib )
+      goto fail;
+    version_at_least = dlsym( funcs->lib, "hb_version_at_least" );
+    if ( !version_at_least )
+      goto fail;
+  }
+
+  /* Keep version in sync with meson.build and configure.raw */
+  if ( !version_at_least ( 2, 0, 0 ) )
     goto fail;
 
-
+  /* Load all symbols we use. */
 #define FT_HB_API(name) \
-  funcs->name = dlsym(lib, #name);
+  { \
+    funcs->name = dlsym( funcs->lib, #name ); \
+    if ( !funcs->name ) \
+	    goto fail; \
+  }
   FT_HB_APIS
 #undef FT_HB_API
 
-  return NULL;
+  return funcs;
 
 fail:
+  if (funcs->lib)
+    dlclose (funcs->lib);
 #if 0
   if (funcs)
     FT_FREE (funcs);
