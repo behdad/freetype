@@ -356,7 +356,10 @@
     globals->scale_down_factor         = 0;
 
 #ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
-    globals->hb_font = ft_hb_ft_font_create( face, NULL );
+#ifdef FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC
+    globals->hb_funcs = ft_hb_funcs_new( globals );
+#endif
+    globals->hb_font = ft_hb_ft_font_create( globals );
     globals->hb_buf  = hb(buffer_create)();
 #endif
 
@@ -405,6 +408,9 @@
       }
 
 #ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
+#ifdef FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC
+      ft_hb_funcs_free( globals->hb_funcs , globals );
+#endif
       hb(font_destroy)( globals->hb_font );
       hb(buffer_destroy)( globals->hb_buf );
 #endif

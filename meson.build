@@ -356,7 +356,11 @@ harfbuzz_dep = dependency('harfbuzz',
 
 if harfbuzz_dep.found()
   ftoption_command += ['--enable=FT_CONFIG_OPTION_USE_HARFBUZZ']
-  ft2_deps += [harfbuzz_dep]
+  #ft2_deps += [harfbuzz_dep] # XXX(harfbuzz)
+endif
+if harfbuzz_dep.found()
+  # XXX(harfbuzz)
+  ftoption_command += ['--enable=FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC']
 endif
 
 # Brotli decompression support.

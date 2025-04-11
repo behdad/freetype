@@ -438,19 +438,19 @@
 
 
   void*
-  af_shaper_buf_create( FT_Face  face )
+  af_shaper_buf_create( AF_FaceGlobals  globals )
   {
-    FT_UNUSED( face );
+    FT_UNUSED( globals );
 
     return (void*)hb(buffer_create)();
   }
 
 
   void
-  af_shaper_buf_destroy( FT_Face  face,
+  af_shaper_buf_destroy( AF_FaceGlobals  globals,
                          void*    buf )
   {
-    FT_UNUSED( face );
+    FT_UNUSED( globals );
 
     hb(buffer_destroy)( (hb_buffer_t*)buf );
   }
@@ -462,11 +462,15 @@
                          void*            buf_,
                          unsigned int*    count )
   {
+    AF_FaceGlobals       globals = metrics->globals;
+
     AF_StyleClass        style_class;
     const hb_feature_t*  feature;
     FT_Int               upem;
     const char*          q;
     int                  len;
+
+    FT_UNUSED( globals );
 
     hb_buffer_t*    buf = (hb_buffer_t*)buf_;
     hb_font_t*      font;
@@ -561,12 +565,14 @@
                       FT_Long*         advance,
                       FT_Long*         y_offset )
   {
+    AF_FaceGlobals        globals = metrics->globals;
+
     hb_buffer_t*          buf = (hb_buffer_t*)buf_;
     hb_glyph_info_t*      ginfo;
     hb_glyph_position_t*  gpos;
     unsigned int          gcount;
 
-    FT_UNUSED( metrics );
+    FT_UNUSED( globals );
 
 
     ginfo = hb(buffer_get_glyph_infos)( buf, &gcount );
@@ -603,19 +609,19 @@
 
 
   void*
-  af_shaper_buf_create( FT_Face  face )
+  af_shaper_buf_create( AF_FaceGlobals  globals )
   {
-    FT_UNUSED( face );
+    FT_UNUSED( globals );
 
     return NULL;
   }
 
 
   void
-  af_shaper_buf_destroy( FT_Face  face,
+  af_shaper_buf_destroy( AF_FaceGlobals  globals,
                          void*    buf )
   {
-    FT_UNUSED( face );
+    FT_UNUSED( globals );
     FT_UNUSED( buf );
   }
 
