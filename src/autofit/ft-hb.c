@@ -27,23 +27,25 @@
 #include <freetype/freetype.h>
 #include <freetype/internal/ftmemory.h>
 
-#ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
+#ifdef FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC
 
 #include "ft-hb.h"
 
+#include "afglobal.h"
+
 #include <dlfcn.h>
 
-ft_hb_funcs_t * ft_hb_funcs (void)
+ft_hb_funcs_t * ft_hb_funcs_new ( struct  AF_FaceGlobalsRec_ *af_globals )
 {
+  FT_Memory memory = af_globals->face->memory;
+  FT_Error error;
   static ft_hb_funcs_t *funcs = NULL;
   if (funcs) return funcs;
 
-#if 0
   if ( FT_NEW ( funcs ) )
     return NULL;
-#endif
+  FT_ZERO( funcs );
 
-  funcs->lib = NULL;
   ft_hb_version_at_least_func_t version_at_least = dlsym( RTLD_DEFAULT, "hb_version_at_least" );
   if ( !version_at_least ) {
     /* Load the HarfBuzz library */
@@ -74,19 +76,23 @@ ft_hb_funcs_t * ft_hb_funcs (void)
 fail:
   if (funcs->lib)
     dlclose (funcs->lib);
-#if 0
   if (funcs)
     FT_FREE (funcs);
-#endif
   funcs = NULL;
   return NULL;
 }
 
-#else /* !FT_CONFIG_OPTION_USE_HARFBUZZ */
+void ft_hb_funcs_free ( ft_hb_funcs_t* funcs )
+{
+  if ( funcs && funcs->lib )
+    dlclose ( funcs->lib );
+}
+
+#else /* !FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC */
 
 /* ANSI C doesn't like empty source files */
 typedef int  ft_hb_dummy_;
 
-#endif /* !FT_CONFIG_OPTION_USE_HARFBUZZ */
+#endif /* !FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC */
 
 /* END */

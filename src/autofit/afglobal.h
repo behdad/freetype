@@ -21,6 +21,7 @@
 #define AFGLOBAL_H_
 
 
+#include "ft-hb.h"
 #include "aftypes.h"
 #include "afmodule.h"
 #include "afshaper.h"
@@ -109,6 +110,9 @@ FT_BEGIN_HEADER
     FT_UShort*       glyph_styles;
 
 #ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
+#ifdef FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC
+    ft_hb_funcs_t*   hb_funcs;
+#endif
     hb_font_t*       hb_font;
     hb_buffer_t*     hb_buf;           /* for feature comparison */
 #endif

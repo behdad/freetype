@@ -26,6 +26,10 @@
 #include <freetype/internal/compiler-macros.h>
 #include <freetype/freetype.h>
 
+#ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
+
+#ifdef FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC
+
 #if defined (_AIX)
 #  include <sys/inttypes.h>
 #elif defined (_MSC_VER) && _MSC_VER < 1600
@@ -153,9 +157,20 @@ FT_HB_APIS
 #undef FT_HB_API
 } ft_hb_funcs_t;
 
-FT_LOCAL( ft_hb_funcs_t * ) ft_hb_funcs (void);
+struct  AF_FaceGlobalsRec_;
+FT_LOCAL( ft_hb_funcs_t * ) ft_hb_funcs_new ( struct  AF_FaceGlobalsRec_ *af_globals );
+FT_LOCAL( void ) ft_hb_funcs_free ( ft_hb_funcs_t* funcs );
+#define hb(x) globals->hb_funcs->hb_##x
 
-#define hb(x) ft_hb_funcs()->hb_##x
+#else /* FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC */
+
+#include <hb-ot.h>
+
+#define hb(x) hb_##x
+
+#endif /* FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC */
+
+#endif /* FT_CONFIG_OPTION_USE_HARFBUZZ */
 
 FT_END_HEADER
 
