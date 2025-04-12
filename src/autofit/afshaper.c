@@ -138,7 +138,7 @@
 
 
       hb(ot_tags_from_script_and_language)( script,
-                                           HB_TAG_NONE,
+                                           HB_LANGUAGE_INVALID,
                                            &tags_count,
                                            tags,
                                            NULL,
