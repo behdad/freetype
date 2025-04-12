@@ -27,12 +27,13 @@
 #include <freetype/freetype.h>
 #include <freetype/internal/ftmemory.h>
 
-#if defined(FT_CONFIG_OPTION_USE_HARFBUZZ) && \
-    defined(FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC)
+#include "afglobal.h"
 
 #include "ft-hb.h"
 
-#include "afglobal.h"
+
+#if defined(FT_CONFIG_OPTION_USE_HARFBUZZ) && \
+    defined(FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC)
 
 #include <dlfcn.h>
 
@@ -103,14 +104,14 @@ void ft_hb_funcs_done ( struct AF_ModuleRec_ *af_module)
   }
 }
 
-int ft_hb_enabled ( struct AF_FaceGlobalsRec_ *globals )
+FT_Bool ft_hb_enabled ( struct AF_FaceGlobalsRec_ *globals )
 {
   return globals->module->hb_funcs != NULL;
 }
 
 #else /* FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC */
 
-int ft_hb_enabled ( struct AF_FaceGlobalsRec_ *globals )
+FT_Bool ft_hb_enabled ( struct AF_FaceGlobalsRec_ *globals )
 {
 #ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
   return TRUE;
