@@ -61,7 +61,13 @@ void ft_hb_funcs_init ( struct  AF_ModuleRec_ *af_module )
      * holds onto global variables, and closing the library
      * will cause them to be invalidated.
      */
-    lib = dlopen( "libharfbuzz.so.0", RTLD_LAZY | RTLD_GLOBAL );
+#ifdef __APPLE__
+#define LIBHARFBUZZ "libharfbuzz.dylib"
+#else
+#define LIBHARFBUZZ "libharfbuzz.so"
+#endif
+    lib = dlopen( LIBHARFBUZZ, RTLD_LAZY | RTLD_GLOBAL );
+#undef LIBHARFBUZZ
     if ( !lib )
       goto fail;
     version_atleast = dlsym( lib, "hb_version_atleast" );
