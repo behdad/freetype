@@ -723,6 +723,7 @@
 
 #ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
 
+    if ( ft_hb_enabled ( globals ) )
     {
       hb_font_t  *hb_font    = globals->hb_font;
       hb_set_t   *result_set = hb(set_create)();
@@ -779,9 +780,8 @@
       if ( error )
         goto Exit;
     }
-
-#else /* !FT_CONFIG_OPTION_USE_HARFBUZZ */
-
+    else
+#endif /* FT_CONFIG_OPTION_USE_HARFBUZZ */
     {
       FT_UInt  i;
 #ifdef FT_DEBUG_LEVEL_TRACE
@@ -812,8 +812,6 @@
         ( *map )->entries[i].codepoint   = codepoint;
       }
     }
-
-#endif /* !FT_CONFIG_OPTION_USE_HARFBUZZ */
 
     ft_qsort( ( *map )->entries,
               ( *map )->length,
