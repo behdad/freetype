@@ -349,18 +349,37 @@ if libpng_dep.found()
 endif
 
 # Harfbuzz support.
-harfbuzz_dep = dependency('harfbuzz',
-  version: '>= 2.0.0',
-  required: get_option('harfbuzz'),
-  default_options: ['freetype=disabled'])
-
-if harfbuzz_dep.found()
-  ftoption_command += ['--enable=FT_CONFIG_OPTION_USE_HARFBUZZ']
-  #ft2_deps += [harfbuzz_dep] # XXX(harfbuzz)
+harfbuzz_opt = get_option('harfbuzz')
+harfbuzz_dep = disabler()
+if harfbuzz_opt == 'enabled' or harfbuzz_opt == 'auto'
+  harfbuzz_dep = dependency('harfbuzz',
+    version: '>= 2.0.0',
+    required: harfbuzz_opt == 'enabled',
+    default_options: ['freetype=disabled'])
+  if harfbuzz_dep.found()
+    harfbuzz_opt = 'YES'
+    ftoption_command += ['--enable=FT_CONFIG_OPTION_USE_HARFBUZZ']
+    ft2_deps += [harfbuzz_dep]
+  endif
 endif
-if harfbuzz_dep.found()
-  # XXX(harfbuzz)
-  ftoption_command += ['--enable=FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC']
+if not harfbuzz_dep.found() and (harfbuzz_opt == 'dynamic' or harfbuzz_opt == 'auto')
+  harfbuzz_dep = meson.get_compiler('c').find_library('dl',
+    required: harfbuzz_opt == 'dynamic',
+  )
+  if harfbuzz_dep.found()
+    harfbuzz_opt = 'dynamic'
+    ftoption_command += [
+      '--enable=FT_CONFIG_OPTION_USE_HARFBUZZ',
+      '--enable=FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC'
+    ]
+    ft2_deps += [harfbuzz_dep]
+  endif
+endif
+if not harfbuzz_dep.found() and (harfbuzz_opt == 'enabled' or harfbuzz_opt == 'dynamic')
+  error('Could not enable harfbuzz')
+endif
+if not harfbuzz_dep.found()
+  harfbuzz_opt = 'NO'
 endif
 
 # Brotli decompression support.
@@ -493,7 +512,7 @@ summary({'OS': host_machine.system(),
 summary({'Zlib': zlib_option,
          'Bzip2': bzip2_dep.found(),
          'Png': libpng_dep.found(),
-         'Harfbuzz': harfbuzz_dep.found(),
+         'Harfbuzz': harfbuzz_opt,
          'Brotli': brotli_dep.found(),
         }, bool_yn: true, section: 'Used Libraries')
 
