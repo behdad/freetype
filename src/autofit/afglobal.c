@@ -22,6 +22,10 @@
 #include "afws-decl.h"
 #include <freetype/internal/ftdebug.h>
 
+#ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
+#include "ft-hb-ft.h"
+#endif /* FT_CONFIG_OPTION_USE_HARFBUZZ */
+
 
   /**************************************************************************
    *
