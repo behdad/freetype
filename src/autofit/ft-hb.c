@@ -36,24 +36,34 @@
 
 #include <dlfcn.h>
 
-ft_hb_funcs_t * ft_hb_funcs_new ( struct  AF_FaceGlobalsRec_ *af_globals )
+void ft_hb_funcs_init ( struct  AF_ModuleRec_ *af_module )
 {
-  FT_Memory memory = af_globals->face->memory;
+  FT_Memory memory = af_module->root.memory;
   FT_Error error;
+
   ft_hb_funcs_t *funcs = NULL;
 
   if ( FT_NEW ( funcs ) )
-    return NULL;
+    goto fail;
   FT_ZERO( funcs );
 
-  ft_hb_version_atleast_func_t version_atleast = dlsym( RTLD_DEFAULT, "hb_version_atleast" );
+  void *lib = RTLD_DEFAULT;
+  ft_hb_version_atleast_func_t version_atleast = dlsym( lib, "hb_version_atleast" );
   if ( !version_atleast )
   {
-    /* Load the HarfBuzz library */
-    funcs->lib = dlopen( "libharfbuzz.so.0", RTLD_LAZY | RTLD_GLOBAL );
-    if ( !funcs->lib )
+    /* Load the HarfBuzz library.
+     *
+     * We never close the library, since we opened it with RTLD_GLOBAL.
+     * This is important for the case where we are using HarfBuzz
+     * as a shared library, and we want to use the symbols from
+     * the library in other shared libraries or clients. HarfBuzz
+     * holds onto global variables, and closing the library
+     * will cause them to be invalidated.
+     */
+    lib = dlopen( "libharfbuzz.so.0", RTLD_LAZY | RTLD_GLOBAL );
+    if ( !lib )
       goto fail;
-    version_atleast = dlsym( funcs->lib, "hb_version_atleast" );
+    version_atleast = dlsym( lib, "hb_version_atleast" );
     if ( !version_atleast )
       goto fail;
   }
@@ -65,40 +75,32 @@ ft_hb_funcs_t * ft_hb_funcs_new ( struct  AF_FaceGlobalsRec_ *af_globals )
   /* Load all symbols we use. */
 #define HB_EXTERN(ret, name, args) \
   { \
-    funcs->name = dlsym( funcs->lib, #name ); \
+    funcs->name = dlsym( lib, #name ); \
     if ( !funcs->name ) \
 	    goto fail; \
   }
 #include "ft-hb-decls.h"
 #undef HB_EXTERN
 
-  return funcs;
+  af_module->hb_funcs = funcs;
+  return;
 
 fail:
-  ft_hb_funcs_free ( funcs, af_globals );
-  return NULL;
+  if ( funcs )
+    FT_FREE( funcs );
+
+  af_module->hb_funcs = NULL;
 }
 
-void ft_hb_funcs_free ( ft_hb_funcs_t* funcs, struct AF_FaceGlobalsRec_ *af_globals)
+void ft_hb_funcs_done ( struct AF_ModuleRec_ *af_module)
 {
-  FT_Memory memory = af_globals->face->memory;
+  FT_Memory memory = af_module->root.memory;
 
-  if ( !funcs )
-    return;
-
-#if 0
-  /* Never close the library, since we opened it with RTLD_GLOBAL.
-   * This is important for the case where we are using HarfBuzz
-   * as a shared library, and we want to use the symbols from
-   * the library in other shared libraries or clients. HarfBuzz
-   * holds onto global variables, and closing the library
-   * will cause them to be invalidated.
-   */
-  if ( funcs->lib )
-    dlclose ( funcs->lib );
-#endif
-
-  FT_FREE ( funcs );
+  if ( af_module->hb_funcs )
+  {
+    FT_FREE ( af_module->hb_funcs );
+    af_module->hb_funcs = NULL;
+  }
 }
 
 #else /* !FT_CONFIG_OPTION_USE_HARFBUZZ* */

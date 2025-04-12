@@ -17,16 +17,15 @@ FT_BEGIN_HEADER
 #undef HB_EXTERN
 
 typedef struct ft_hb_funcs_t {
-  void *lib; /* dlopen() handle. */
 #define HB_EXTERN(ret, name, args) ft_##name##_func_t name;
 #include "ft-hb-decls.h"
 #undef HB_EXTERN
 } ft_hb_funcs_t;
 
-struct  AF_FaceGlobalsRec_;
-FT_LOCAL( ft_hb_funcs_t * ) ft_hb_funcs_new ( struct  AF_FaceGlobalsRec_ *af_globals );
-FT_LOCAL( void ) ft_hb_funcs_free ( ft_hb_funcs_t* funcs , struct  AF_FaceGlobalsRec_ *af_globals );
-#define hb(x) globals->hb_funcs->hb_##x
+struct  AF_ModuleRec_;
+FT_LOCAL( void ) ft_hb_funcs_init ( struct  AF_ModuleRec_ *af_module );
+FT_LOCAL( void ) ft_hb_funcs_done ( struct  AF_ModuleRec_ *af_module );
+#define hb(x) globals->module->hb_funcs->hb_##x
 
 #else /* FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC */
 
