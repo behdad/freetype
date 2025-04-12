@@ -390,7 +390,8 @@
         => No new glyphs.
   */
   static FT_Error
-  af_all_glyph_variants_helper( hb_font_t     *font,
+  af_all_glyph_variants_helper( AF_FaceGlobals  globals,
+                                hb_font_t     *font,
                                 hb_buffer_t   *buffer,
                                 hb_set_t      *feature_tag_pool,
                                 hb_feature_t  *current_features,
@@ -407,19 +408,19 @@
 
     /* Get the list of glyphs that are created by only transforming, */
     /* based on the features in `current_features`.                  */
-    baseline_glyphs = hb_set_create();
-    if ( !hb_set_allocation_successful( baseline_glyphs ) )
+    baseline_glyphs = hb(set_create)();
+    if ( !hb(set_allocation_successful)( baseline_glyphs ) )
     {
       error = FT_Err_Out_Of_Memory;
       goto Exit;
     }
 
-    hb_ot_shape_glyphs_closure( font,
-                                buffer,
-                                current_features,
-                                num_features,
-                                baseline_glyphs );
-    if ( !hb_set_allocation_successful( baseline_glyphs ) )
+    hb(ot_shape_glyphs_closure)( font,
+                                 buffer,
+                                 current_features,
+                                 num_features,
+                                 baseline_glyphs );
+    if ( !hb(set_allocation_successful)( baseline_glyphs ) )
     {
       error = FT_Err_Out_Of_Memory;
       goto Exit;
@@ -427,14 +428,14 @@
 
     /* Add these baseline glyphs to the result.  The baseline glyph set */
     /* contains at least the glyph specified by the cmap.               */
-    hb_set_union( result, baseline_glyphs );
-    if ( !hb_set_allocation_successful( result ) )
+    hb(set_union)( result, baseline_glyphs );
+    if ( !hb(set_allocation_successful)( result ) )
     {
       error = FT_Err_Out_Of_Memory;
       goto Exit;
     }
 
-    if ( !hb_set_get_population( feature_tag_pool ) )
+    if ( !hb(set_get_population)( feature_tag_pool ) )
     {
       error = FT_Err_Out_Of_Memory;
       goto Exit;
@@ -456,8 +457,8 @@
         handle these lookup type 3 cases fully.
     */
 
-    new_glyphs = hb_set_create();
-    if ( !hb_set_allocation_successful( new_glyphs ) )
+    new_glyphs = hb(set_create)();
+    if ( !hb(set_allocation_successful)( new_glyphs ) )
     {
       error = FT_Err_Out_Of_Memory;
       goto Exit;
@@ -465,37 +466,38 @@
 
     feature_tag = HB_SET_VALUE_INVALID;
 
-    while ( hb_set_next( feature_tag_pool, &feature_tag ) )
+    while ( hb(set_next)( feature_tag_pool, &feature_tag ) )
     {
-      hb_set_clear( new_glyphs );
+      hb(set_clear)( new_glyphs );
 
       current_features[num_features].tag = feature_tag;
 
-      hb_ot_shape_glyphs_closure ( font,
+      hb(ot_shape_glyphs_closure)( font,
                                    buffer,
                                    current_features,
                                    num_features + 1,
                                    new_glyphs );
-      if ( !hb_set_allocation_successful( new_glyphs ) )
+      if ( !hb(set_allocation_successful)( new_glyphs ) )
       {
         error = FT_Err_Out_Of_Memory;
         goto Exit;
       }
 
-      hb_set_subtract( new_glyphs, result );
+      hb(set_subtract)( new_glyphs, result );
 
       /* `new_glyphs` now contains all glyphs that appeared in the result */
       /* of `hb_ot_shape_glyphs_closure` that haven't already been        */
       /* accounted for in the result.  If this contains any glyphs, we    */
       /* also need to try this feature in combination with other features */
       /* by recursing.                                                    */
-      if ( hb_set_get_population( new_glyphs ) != 0 )
+      if ( hb(set_get_population)( new_glyphs ) != 0 )
       {
         /* Remove this feature from the feature pool temporarily so that */
         /* a later recursion won't try it.                               */
-        hb_set_del( feature_tag_pool, feature_tag );
+        hb(set_del)( feature_tag_pool, feature_tag );
 
-        error = af_all_glyph_variants_helper( font,
+        error = af_all_glyph_variants_helper( globals,
+                                              font,
                                               buffer,
                                               feature_tag_pool,
                                               current_features,
@@ -505,21 +507,22 @@
           goto Exit;
 
         /* Add back the feature we removed. */
-        hb_set_add( feature_tag_pool, feature_tag );
-        if ( !hb_set_allocation_successful( feature_tag_pool ) )
+        hb(set_add)( feature_tag_pool, feature_tag );
+        if ( !hb(set_allocation_successful)( feature_tag_pool ) )
           return FT_Err_Out_Of_Memory;
       }
     }
 
   Exit:
-    hb_set_destroy( baseline_glyphs );
-    hb_set_destroy( new_glyphs );
+    hb(set_destroy)( baseline_glyphs );
+    hb(set_destroy)( new_glyphs );
     return FT_Err_Ok;
   }
 
 
   static FT_Error
-  af_all_glyph_variants( FT_Face     face,
+  af_all_glyph_variants( AF_FaceGlobals  globals,
+                         FT_Face     face,
                          hb_font_t  *hb_font,
                          FT_UInt32   codepoint,
                          hb_set_t*   result )
@@ -527,15 +530,15 @@
     FT_Error  error;
 
     FT_Memory   memory  = face->memory;
-    hb_face_t  *hb_face = hb_font_get_face( hb_font );
+    hb_face_t  *hb_face = hb(font_get_face)( hb_font );
 
     FT_Bool       feature_list_done;
     unsigned int  start_offset;
 
     /* The set of all feature tags in the font. */
-    hb_set_t        *feature_tags          = hb_set_create();
-    hb_set_t        *type_3_lookup_indices = hb_set_create();
-    hb_buffer_t     *codepoint_buffer      = hb_buffer_create();
+    hb_set_t        *feature_tags          = hb(set_create)();
+    hb_set_t        *type_3_lookup_indices = hb(set_create)();
+    hb_buffer_t     *codepoint_buffer      = hb(buffer_create)();
     hb_codepoint_t  *type_3_alternate_glyphs_buffer;
 
     hb_feature_t  *feature_buffer;
@@ -553,9 +556,9 @@
     FT_UInt         base_glyph_index;
 
 
-    if ( !hb_set_allocation_successful( feature_tags )           ||
-         !hb_buffer_allocation_successful( codepoint_buffer )    ||
-         !hb_set_allocation_successful ( type_3_lookup_indices ) )
+    if ( !hb(set_allocation_successful)( feature_tags )           ||
+         !hb(buffer_allocation_successful)( codepoint_buffer )    ||
+         !hb(set_allocation_successful)( type_3_lookup_indices ) )
     {
       error = FT_Err_Out_Of_Memory;
       goto Exit;
@@ -574,19 +577,19 @@
       unsigned int  i;
 
 
-      hb_ot_layout_table_get_feature_tags( hb_face,
-                                           HB_OT_TAG_GSUB,
-                                           start_offset,
-                                           &feature_count,
-                                           tags );
+      hb(ot_layout_table_get_feature_tags)( hb_face,
+                                            HB_OT_TAG_GSUB,
+                                            start_offset,
+                                            &feature_count,
+                                            tags );
       start_offset += 20;
       if ( feature_count < 20 )
         feature_list_done = 1;
 
       for ( i = 0; i < feature_count; i++ )
-        hb_set_add( feature_tags, tags[i] );
+        hb(set_add)( feature_tags, tags[i] );
 
-      if ( !hb_set_allocation_successful( feature_tags ) )
+      if ( !hb(set_allocation_successful)( feature_tags ) )
       {
         error = FT_Err_Out_Of_Memory;
         goto Exit;
@@ -594,22 +597,23 @@
     }
 
     /* Make a buffer only consisting of the given code point. */
-    if ( !hb_buffer_pre_allocate( codepoint_buffer, 1 ) )
+    if ( !hb(buffer_pre_allocate)( codepoint_buffer, 1 ) )
     {
       error = FT_Err_Out_Of_Memory;
       goto Exit;
     }
-    hb_buffer_set_direction( codepoint_buffer, HB_DIRECTION_LTR );
-    hb_buffer_add( codepoint_buffer, codepoint, 0 );
+    hb(buffer_set_direction)( codepoint_buffer, HB_DIRECTION_LTR );
+    hb(buffer_add)( codepoint_buffer, codepoint, 0 );
 
     /* The array of features that is used by the recursive part has at */
     /* most as many entries as there are features, so make the length  */
     /* equal to the length of `feature_tags`.                          */
     if ( ( error = FT_NEW_ARRAY( feature_buffer,
-                                 hb_set_get_population( feature_tags ) ) ) )
+                                 hb(set_get_population)( feature_tags ) ) ) )
       goto Exit;
 
-    error = af_all_glyph_variants_helper( hb_font,
+    error = af_all_glyph_variants_helper( globals,
+                                          hb_font,
                                           codepoint_buffer,
                                           feature_tags,
                                           feature_buffer,
@@ -625,13 +629,13 @@
 
          https://gitlab.gnome.org/GNOME/gtk/-/blob/40f20fee3d8468749dfb233a6f95921c765c1163/gtk/gtkfontchooserwidget.c#L2100
      */
-    hb_ot_layout_collect_lookups( hb_face,
-                                  HB_OT_TAG_GSUB,
-                                  NULL,
-                                  NULL,
-                                  feature_list,
-                                  type_3_lookup_indices );
-    if ( !hb_set_allocation_successful( type_3_lookup_indices ) )
+    hb(ot_layout_collect_lookups)( hb_face,
+                                   HB_OT_TAG_GSUB,
+                                   NULL,
+                                   NULL,
+                                   feature_list,
+                                   type_3_lookup_indices );
+    if ( !hb(set_allocation_successful)( type_3_lookup_indices ) )
     {
       error = FT_Err_Out_Of_Memory;
       goto Exit;
@@ -648,13 +652,13 @@
 
     if ( base_glyph_index )
     {
-      while ( hb_set_next( type_3_lookup_indices, &lookup_index ) )
+      while ( hb(set_next)( type_3_lookup_indices, &lookup_index ) )
       {
         unsigned  alternate_count = MAX_ALTERNATES;
         unsigned  i;
 
 
-        hb_ot_layout_lookup_get_glyph_alternates(
+        hb(ot_layout_lookup_get_glyph_alternates)(
           hb_face,
           lookup_index,
           base_glyph_index,
@@ -663,14 +667,14 @@
           type_3_alternate_glyphs_buffer );
 
         for ( i = 0; i < alternate_count; i++ )
-          hb_set_add( result, type_3_alternate_glyphs_buffer[i] );
+          hb(set_add)( result, type_3_alternate_glyphs_buffer[i] );
       }
     }
 
   Exit:
-    hb_set_destroy( feature_tags );
-    hb_set_destroy( type_3_lookup_indices );
-    hb_buffer_destroy( codepoint_buffer );
+    hb(set_destroy)( feature_tags );
+    hb(set_destroy)( type_3_lookup_indices );
+    hb(buffer_destroy)( codepoint_buffer );
     FT_FREE( feature_buffer );
     FT_FREE( type_3_alternate_glyphs_buffer );
 
@@ -721,12 +725,12 @@
 
     {
       hb_font_t  *hb_font    = globals->hb_font;
-      hb_set_t   *result_set = hb_set_create();
+      hb_set_t   *result_set = hb(set_create)();
 
       FT_ULong  i;
 
 
-      if ( !hb_set_allocation_successful( result_set ) )
+      if ( !hb(set_allocation_successful)( result_set ) )
       {
         error = FT_Err_Out_Of_Memory;
         goto harfbuzz_path_Exit;
@@ -741,7 +745,8 @@
         hb_codepoint_t  glyph;
 
 
-        error = af_all_glyph_variants( face,
+        error = af_all_glyph_variants( globals,
+                                       face,
                                        hb_font,
                                        codepoint,
                                        result_set );
@@ -750,7 +755,7 @@
 
         glyph = HB_SET_VALUE_INVALID;
 
-        while ( hb_set_next( result_set, &glyph ) )
+        while ( hb(set_next)( result_set, &glyph ) )
         {
           FT_Long  insert_point;
 
@@ -766,11 +771,11 @@
           ( *map )->entries[insert_point].codepoint   = codepoint;
         }
 
-        hb_set_clear( result_set );
+        hb(set_clear)( result_set );
       }
 
     harfbuzz_path_Exit:
-      hb_set_destroy( result_set );
+      hb(set_destroy)( result_set );
       if ( error )
         goto Exit;
     }
