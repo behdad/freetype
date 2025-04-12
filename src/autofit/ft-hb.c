@@ -63,14 +63,14 @@ ft_hb_funcs_t * ft_hb_funcs_new ( struct  AF_FaceGlobalsRec_ *af_globals )
     goto fail;
 
   /* Load all symbols we use. */
-#define FT_HB_API(name) \
+#define HB_EXTERN(ret, name, args) \
   { \
     funcs->name = dlsym( funcs->lib, #name ); \
     if ( !funcs->name ) \
 	    goto fail; \
   }
-  FT_HB_APIS
-#undef FT_HB_API
+#include "ft-hb-decls.h"
+#undef HB_EXTERN
 
   return funcs;
 

@@ -1,258 +1,210 @@
-/*
- * Permission is hereby granted, without written agreement and without
- * license or royalty fees, to use, copy, modify, and distribute this
- * software and its documentation for any purpose, provided that the
- * above copyright notice and the following two paragraphs appear in
- * all copies of this software.
- *
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE TO ANY PARTY FOR
- * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
- * ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
- * IF THE COPYRIGHT HOLDER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
- * DAMAGE.
- *
- * THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING,
- * BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
- * ON AN "AS IS" BASIS, AND THE COPYRIGHT HOLDER HAS NO OBLIGATION TO
- * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
- *
- * Author(s): Behdad Esfahbod
- */
 
-#ifndef FT_HB_DECLS_H
-#define FT_HB_DECLS_H
+/* hb-blob.h */
 
-typedef hb_blob_t* (*ft_hb_blob_create_func_t)(
-  const char* data,
-  unsigned int length,
-  hb_memory_mode_t mode,
-  void* user_data,
-  hb_destroy_func_t destroy
-);
+HB_EXTERN(hb_blob_t *,
+hb_blob_create,(const char        *data,
+		unsigned int       length,
+		hb_memory_mode_t   mode,
+		void              *user_data,
+		hb_destroy_func_t  destroy))
 
-typedef void (*ft_hb_blob_destroy_func_t)(
-  hb_blob_t* blob
-);
+HB_EXTERN(void,
+hb_blob_destroy,(hb_blob_t *blob))
 
-typedef void (*ft_hb_buffer_add_func_t)(
-  hb_buffer_t    *buffer,
-  hb_codepoint_t  codepoint,
-  unsigned int    cluster
-);
+/* hb-buffer.h */
 
-typedef void (*ft_hb_buffer_add_utf8_func_t)(
-  hb_buffer_t* buffer,
-  const char* text,
-  int text_length,
-  unsigned int item_offset,
-  int item_length
-);
+HB_EXTERN(void,
+hb_buffer_add,(hb_buffer_t    *buffer,
+	       hb_codepoint_t  codepoint,
+	       unsigned int    cluster))
 
-typedef hb_bool_t (*ft_hb_buffer_allocation_successful_func_t)(
-  hb_buffer_t  *buffer
-);
+HB_EXTERN(void,
+hb_buffer_add_utf8,(hb_buffer_t  *buffer,
+		    const char   *text,
+		    int           text_length,
+		    unsigned int  item_offset,
+		    int           item_length))
 
-typedef void (*ft_hb_buffer_clear_contents_func_t)(
-  hb_buffer_t* buffer
-);
+HB_EXTERN(hb_bool_t,
+hb_buffer_allocation_successful,(hb_buffer_t  *buffer))
 
-typedef hb_buffer_t* (*ft_hb_buffer_create_func_t)(void);
+HB_EXTERN(void,
+hb_buffer_clear_contents,(hb_buffer_t *buffer))
 
-typedef void (*ft_hb_buffer_destroy_func_t)(
-  hb_buffer_t* buffer
-);
+HB_EXTERN(hb_buffer_t *,
+hb_buffer_create,(void))
 
-typedef hb_glyph_info_t* (*ft_hb_buffer_get_glyph_infos_func_t)(
-  hb_buffer_t* buffer,
-  unsigned int* length
-);
+HB_EXTERN(void,
+hb_buffer_destroy,(hb_buffer_t *buffer))
 
-typedef hb_glyph_position_t* (*ft_hb_buffer_get_glyph_positions_func_t)(
-  hb_buffer_t* buffer,
-  unsigned int* length
-);
+HB_EXTERN(hb_glyph_info_t *,
+hb_buffer_get_glyph_infos,(hb_buffer_t  *buffer,
+			   unsigned int *length))
 
-typedef unsigned int (*ft_hb_buffer_get_length_func_t)(
-  hb_buffer_t* buffer
-);
+HB_EXTERN(hb_glyph_position_t *,
+hb_buffer_get_glyph_positions,(hb_buffer_t  *buffer,
+			       unsigned int *length))
 
-typedef void (*ft_hb_buffer_guess_segment_properties_func_t)(
-  hb_buffer_t* buffer
-);
+HB_EXTERN(unsigned int,
+hb_buffer_get_length,(const hb_buffer_t *buffer))
 
-typedef hb_bool_t (*ft_hb_buffer_pre_allocate_func_t)(
-  hb_buffer_t  *buffer,
-  unsigned int  size
-);
+HB_EXTERN(void,
+hb_buffer_guess_segment_properties,(hb_buffer_t *buffer))
 
-typedef void (*ft_hb_buffer_set_direction_func_t)(
-  hb_buffer_t    *buffer,
-  hb_direction_t  direction
-);
+HB_EXTERN(hb_bool_t,
+hb_buffer_pre_allocate,(hb_buffer_t  *buffer,
+			unsigned int  size))
 
-typedef hb_face_t* (*ft_hb_face_create_func_t)(
-  hb_blob_t* blob,
-  unsigned int index
-);
+HB_EXTERN(void,
+hb_buffer_set_direction,(hb_buffer_t    *buffer,
+			 hb_direction_t  direction))
 
-typedef hb_face_t* (*ft_hb_face_create_for_tables_func_t)(
-  hb_reference_table_func_t reference_table_func,
-  void* user_data,
-  hb_destroy_func_t destroy
-);
+/* hb-face.h */
 
-typedef void (*ft_hb_face_destroy_func_t)(
-  hb_face_t* face
-);
+HB_EXTERN(hb_face_t *,
+hb_face_create,(hb_blob_t    *blob,
+		unsigned int  index))
 
-typedef void (*ft_hb_face_set_index_func_t)(
-  hb_face_t* face,
-  unsigned int index
-);
+HB_EXTERN(hb_face_t *,
+hb_face_create_for_tables,(hb_reference_table_func_t  reference_table_func,
+			   void                      *user_data,
+			   hb_destroy_func_t          destroy))
 
-typedef void (*ft_hb_face_set_upem_func_t)(
-  hb_face_t* face,
-  unsigned int upem
-);
+HB_EXTERN(void,
+hb_face_destroy,(hb_face_t *face))
 
-typedef hb_font_t* (*ft_hb_font_create_func_t)(
-  hb_face_t* face
-);
+HB_EXTERN(void,
+hb_face_set_index,(hb_face_t    *face,
+		   unsigned int  index))
 
-typedef void (*ft_hb_font_destroy_func_t)(
-  hb_font_t* font
-);
+HB_EXTERN(void,
+hb_face_set_upem,(hb_face_t    *face,
+		  unsigned int  upem))
 
-typedef hb_face_t* (*ft_hb_font_get_face_func_t)(
-  hb_font_t* font
-);
+/* hb-font.h */
 
-typedef void (*ft_hb_font_set_scale_func_t)(
-  hb_font_t* font,
-  int x_scale,
-  int y_scale
-);
+HB_EXTERN(hb_font_t *,
+hb_font_create,(hb_face_t *face))
 
-typedef void (*ft_hb_ot_layout_collect_lookups_func_t)(
-  hb_face_t* face,
-  hb_tag_t table_tag,
-  const hb_tag_t* scripts,
-  const hb_tag_t* languages,
-  const hb_tag_t* features,
-  hb_set_t* lookup_indexes
-);
+HB_EXTERN(void,
+hb_font_destroy,(hb_font_t *font))
 
-typedef void (*ft_hb_ot_layout_lookup_collect_glyphs_func_t)(
-  hb_face_t* face,
-  hb_tag_t table_tag,
-  unsigned int lookup_index,
-  hb_set_t* input_glyphs,
-  hb_set_t* output_glyphs,
-  hb_set_t* lookups_before,
-  hb_set_t* lookups_after
-);
+HB_EXTERN(hb_face_t *,
+hb_font_get_face,(hb_font_t *font))
 
-typedef unsigned (*ft_hb_ot_layout_lookup_get_glyph_alternates_func_t)(
-  hb_face_t      *face,
-  unsigned        lookup_index,
-  hb_codepoint_t  glyph,
-  unsigned        start_offset,
-  unsigned       *alternate_count /* IN/OUT */,
-  hb_codepoint_t *alternate_glyphs /* OUT */
-);
+HB_EXTERN(void,
+hb_font_set_scale,(hb_font_t *font,
+		   int x_scale,
+		   int y_scale))
 
-typedef hb_bool_t (*ft_hb_ot_layout_lookup_would_substitute_func_t)(
-  hb_face_t* face,
-  unsigned int lookup_index,
-  const hb_codepoint_t* glyphs,
-  unsigned int glyph_count,
-  hb_bool_t zero_context
-);
+/* hb-ot-layout.h */
 
-typedef unsigned int (*ft_hb_ot_layout_table_get_feature_tags_func_t)(
-  hb_face_t    *face,
-  hb_tag_t      table_tag,
-  unsigned int  start_offset,
-  unsigned int *feature_count /* IN/OUT */,
-  hb_tag_t     *feature_tags /* OUT */
-);
+HB_EXTERN(void,
+hb_ot_layout_collect_lookups,(hb_face_t      *face,
+			      hb_tag_t        table_tag,
+			      const hb_tag_t *scripts,
+			      const hb_tag_t *languages,
+			      const hb_tag_t *features,
+			      hb_set_t       *lookup_indexes /* OUT */))
 
-typedef void (*ft_hb_ot_shape_glyphs_closure_func_t)(
-  hb_font_t          *font,
-  hb_buffer_t        *buffer,
-  const hb_feature_t *features,
-  unsigned int        num_features,
-  hb_set_t           *glyphs
-);
+HB_EXTERN(void,
+hb_ot_layout_lookup_collect_glyphs,(hb_face_t    *face,
+				    hb_tag_t      table_tag,
+				    unsigned int  lookup_index,
+				    hb_set_t     *glyphs_before, /* OUT.  May be NULL */
+				    hb_set_t     *glyphs_input,  /* OUT.  May be NULL */
+				    hb_set_t     *glyphs_after,  /* OUT.  May be NULL */
+				    hb_set_t     *glyphs_output  /* OUT.  May be NULL */))
 
-typedef void (*ft_hb_ot_tags_from_script_and_language_func_t)(
-  hb_tag_t script,
-  hb_tag_t language,
-  unsigned int* script_count,
-  hb_tag_t* script_tags,
-  hb_tag_t* language_tags,
-  hb_tag_t* feature_tags
-);
+HB_EXTERN(unsigned,
+hb_ot_layout_lookup_get_glyph_alternates,(hb_face_t      *face,
+					  unsigned        lookup_index,
+					  hb_codepoint_t  glyph,
+					  unsigned        start_offset,
+					  unsigned       *alternate_count /* IN/OUT */,
+					  hb_codepoint_t *alternate_glyphs /* OUT */))
 
-typedef void (*ft_hb_set_add_func_t)(
-  hb_set_t       *set,
-  hb_codepoint_t  codepoint
-);
+HB_EXTERN(hb_bool_t,
+hb_ot_layout_lookup_would_substitute,(hb_face_t            *face,
+				      unsigned int          lookup_index,
+				      const hb_codepoint_t *glyphs,
+				      unsigned int          glyphs_length,
+				      hb_bool_t             zero_context))
 
-typedef hb_bool_t (*ft_hb_set_allocation_successful_func_t)(
-  const hb_set_t *set
-);
+HB_EXTERN(unsigned int,
+hb_ot_layout_table_get_feature_tags,(hb_face_t    *face,
+				     hb_tag_t      table_tag,
+				     unsigned int  start_offset,
+				     unsigned int *feature_count /* IN/OUT */,
+				     hb_tag_t     *feature_tags /* OUT */))
 
-typedef void (*ft_hb_set_clear_func_t) (
-  hb_set_t *set
-);
+HB_EXTERN(void,
+hb_ot_tags_from_script_and_language,(hb_script_t   script,
+				     hb_language_t language,
+				     unsigned int *script_count /* IN/OUT */,
+				     hb_tag_t     *script_tags /* OUT */,
+				     unsigned int *language_count /* IN/OUT */,
+				     hb_tag_t     *language_tags /* OUT */))
 
-typedef hb_set_t* (*ft_hb_set_create_func_t)(void);
+/* hb-ot-shape.h */
 
-typedef void (*ft_hb_set_destroy_func_t)(
-  hb_set_t* set
-);
+HB_EXTERN(void,
+hb_ot_shape_glyphs_closure,(hb_font_t          *font,
+			    hb_buffer_t        *buffer,
+			    const hb_feature_t *features,
+			    unsigned int        num_features,
+			    hb_set_t           *glyphs))
 
-typedef void (*ft_hb_set_del_func_t)(
-  hb_set_t       *set,
-  hb_codepoint_t  codepoint
-);
+/* hb-set.h */
 
-typedef unsigned int (*ft_hb_set_get_population_func_t)(
-  const hb_set_t *set
-);
+HB_EXTERN(void,
+hb_set_add,(hb_set_t       *set,
+	    hb_codepoint_t  codepoint))
 
-typedef hb_bool_t (*ft_hb_set_is_empty_func_t)(
-  const hb_set_t* set
-);
+HB_EXTERN(hb_bool_t,
+hb_set_allocation_successful,(const hb_set_t *set))
 
-typedef hb_bool_t (*ft_hb_set_next_func_t)(
-  const hb_set_t* set,
-  hb_codepoint_t* codepoint
-);
+HB_EXTERN(void,
+hb_set_clear,(hb_set_t *set))
 
-typedef void (*ft_hb_set_subtract_func_t)(
-  hb_set_t* set,
-  const hb_set_t* other
-);
+HB_EXTERN(hb_set_t *,
+hb_set_create,(void))
 
-typedef void (*ft_hb_set_union_func_t)(
-  hb_set_t       *set,
-  const hb_set_t *other
-);
+HB_EXTERN(void,
+hb_set_destroy,(hb_set_t *set))
 
-typedef void (*ft_hb_shape_func_t)(
-  hb_font_t* font,
-  hb_buffer_t* buffer,
-  const hb_feature_t* features,
-  unsigned int num_features
-);
+HB_EXTERN(void,
+hb_set_del,(hb_set_t       *set,
+	    hb_codepoint_t  codepoint))
 
-typedef hb_bool_t (*ft_hb_version_atleast_func_t)(
-  unsigned int major,
-  unsigned int minor,
-  unsigned int micro
-);
+HB_EXTERN(unsigned int,
+hb_set_get_population,(const hb_set_t *set))
 
-#endif /* FT_HB_DECLS_H */
+HB_EXTERN(hb_bool_t,
+hb_set_is_empty,(const hb_set_t *set))
+
+HB_EXTERN(hb_bool_t,
+hb_set_next,(const hb_set_t *set,
+	     hb_codepoint_t *codepoint))
+
+HB_EXTERN(void,
+hb_set_subtract,(hb_set_t       *set,
+		 const hb_set_t *other))
+
+HB_EXTERN(void,
+hb_set_union,(hb_set_t       *set,
+	      const hb_set_t *other))
+
+/* hb-shape.h */
+
+HB_EXTERN(void,
+hb_shape,(hb_font_t           *font,
+	  hb_buffer_t         *buffer,
+	  const hb_feature_t  *features,
+	  unsigned int         num_features))
+
+HB_EXTERN(hb_bool_t,
+hb_version_atleast,(unsigned int major,
+		    unsigned int minor,
+		    unsigned int micro))
+
