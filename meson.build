@@ -363,22 +363,28 @@ if harfbuzz_opt == 'enabled' or harfbuzz_opt == 'auto'
   endif
 endif
 if not harfbuzz_dep.found() and (harfbuzz_opt == 'dynamic' or harfbuzz_opt == 'auto')
-  harfbuzz_dep = meson.get_compiler('c').find_library('dl',
-    required: harfbuzz_opt == 'dynamic',
-  )
-  if harfbuzz_dep.found()
+  # On Windows we don't need libdl, but on other platforms we need it.
+  if host_machine.system() == 'windows'
     harfbuzz_opt = 'dynamic'
     ftoption_command += [
       '--enable=FT_CONFIG_OPTION_USE_HARFBUZZ',
       '--enable=FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC'
     ]
-    ft2_deps += [harfbuzz_dep]
+  else
+    harfbuzz_dep = meson.get_compiler('c').find_library('dl',
+      required: harfbuzz_opt == 'dynamic',
+    )
+    if harfbuzz_dep.found()
+      harfbuzz_opt = 'dynamic'
+      ftoption_command += [
+        '--enable=FT_CONFIG_OPTION_USE_HARFBUZZ',
+        '--enable=FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC'
+      ]
+      ft2_deps += [harfbuzz_dep]
+    endif
   endif
 endif
-if not harfbuzz_dep.found() and (harfbuzz_opt == 'enabled' or harfbuzz_opt == 'dynamic')
-  error('Could not enable harfbuzz')
-endif
-if not harfbuzz_dep.found()
+if harfbuzz_opt == 'disabled' or harfbuzz_opt == 'auto'
   harfbuzz_opt = 'NO'
 endif
 

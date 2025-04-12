@@ -35,7 +35,12 @@
 #if defined(FT_CONFIG_OPTION_USE_HARFBUZZ) && \
     defined(FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC)
 
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
+
 
 void ft_hb_funcs_init ( struct  AF_ModuleRec_ *af_module )
 {
@@ -43,13 +48,26 @@ void ft_hb_funcs_init ( struct  AF_ModuleRec_ *af_module )
   FT_Error error;
 
   ft_hb_funcs_t *funcs = NULL;
+  ft_hb_version_atleast_func_t version_atleast = NULL;
 
   if ( FT_NEW ( funcs ) )
     goto fail;
   FT_ZERO( funcs );
 
+#ifdef _WIN32
+#define DLSYM(lib, name) (ft_##name##_func_t) GetProcAddress( lib, #name )
+#else /* !_WIN32 */
+#define DLSYM(lib, name) dlsym( lib, #name )
+#endif
+
+#ifdef _WIN32
+  HANDLE lib = LoadLibraryW( L"libharfbuzz-0.dll" );
+  if ( !lib )
+    goto fail;
+  version_atleast = DLSYM( lib, hb_version_atleast );
+#else /* !_WIN32 */
   void *lib = RTLD_DEFAULT;
-  ft_hb_version_atleast_func_t version_atleast = dlsym( lib, "hb_version_atleast" );
+  version_atleast = DLSYM( lib, hb_version_atleast );
   if ( !version_atleast )
   {
     /* Load the HarfBuzz library.
@@ -68,26 +86,31 @@ void ft_hb_funcs_init ( struct  AF_ModuleRec_ *af_module )
 #endif
     lib = dlopen( LIBHARFBUZZ, RTLD_LAZY | RTLD_GLOBAL );
 #undef LIBHARFBUZZ
+
     if ( !lib )
       goto fail;
-    version_atleast = dlsym( lib, "hb_version_atleast" );
+    version_atleast = DLSYM( lib, hb_version_atleast );
     if ( !version_atleast )
       goto fail;
   }
+#endif
 
   /* Keep version in sync with meson.build and configure.raw */
   if ( !version_atleast ( 2, 0, 0 ) )
     goto fail;
 
   /* Load all symbols we use. */
+
 #define HB_EXTERN(ret, name, args) \
   { \
-    funcs->name = dlsym( lib, #name ); \
+    funcs->name = DLSYM( lib, name ); \
     if ( !funcs->name ) \
-	    goto fail; \
+      goto fail; \
   }
 #include "ft-hb-decls.h"
 #undef HB_EXTERN
+
+#undef DLSYM
 
   af_module->hb_funcs = funcs;
   return;
