@@ -90,6 +90,8 @@ typedef struct hb_feature_t {
   unsigned int  start;
   unsigned int  end;
 } hb_feature_t;
+#define HB_FEATURE_GLOBAL_START	0
+#define HB_FEATURE_GLOBAL_END	((unsigned int) -1)
 typedef struct hb_glyph_info_t {
   hb_codepoint_t codepoint;
   hb_mask_t      mask;
@@ -120,7 +122,9 @@ typedef hb_blob_t * (*hb_reference_table_func_t)  (hb_face_t *face, hb_tag_t tag
 #define FT_HB_APIS \
 	FT_HB_API(hb_blob_create) \
 	FT_HB_API(hb_blob_destroy) \
+	FT_HB_API(hb_buffer_add) \
 	FT_HB_API(hb_buffer_add_utf8) \
+	FT_HB_API(hb_buffer_allocation_successful) \
 	FT_HB_API(hb_buffer_clear_contents) \
 	FT_HB_API(hb_buffer_create) \
 	FT_HB_API(hb_buffer_destroy) \
@@ -128,6 +132,8 @@ typedef hb_blob_t * (*hb_reference_table_func_t)  (hb_face_t *face, hb_tag_t tag
 	FT_HB_API(hb_buffer_get_glyph_positions) \
 	FT_HB_API(hb_buffer_get_length) \
 	FT_HB_API(hb_buffer_guess_segment_properties) \
+	FT_HB_API(hb_buffer_pre_allocate) \
+	FT_HB_API(hb_buffer_set_direction) \
 	FT_HB_API(hb_face_create) \
 	FT_HB_API(hb_face_create_for_tables) \
 	FT_HB_API(hb_face_destroy) \
@@ -139,13 +145,22 @@ typedef hb_blob_t * (*hb_reference_table_func_t)  (hb_face_t *face, hb_tag_t tag
 	FT_HB_API(hb_font_set_scale) \
 	FT_HB_API(hb_ot_layout_collect_lookups) \
 	FT_HB_API(hb_ot_layout_lookup_collect_glyphs) \
+	FT_HB_API(hb_ot_layout_lookup_get_glyph_alternates) \
 	FT_HB_API(hb_ot_layout_lookup_would_substitute) \
+	FT_HB_API(hb_ot_layout_table_get_feature_tags) \
+	FT_HB_API(hb_ot_shape_glyphs_closure) \
 	FT_HB_API(hb_ot_tags_from_script_and_language) \
+	FT_HB_API(hb_set_add) \
+	FT_HB_API(hb_set_allocation_successful) \
+	FT_HB_API(hb_set_clear) \
 	FT_HB_API(hb_set_create) \
+	FT_HB_API(hb_set_del) \
 	FT_HB_API(hb_set_destroy) \
+	FT_HB_API(hb_set_get_population) \
 	FT_HB_API(hb_set_is_empty) \
 	FT_HB_API(hb_set_next) \
 	FT_HB_API(hb_set_subtract) \
+	FT_HB_API(hb_set_union) \
 	FT_HB_API(hb_shape) \
 	FT_HB_API(hb_version_atleast)
 
