@@ -35,12 +35,22 @@ typedef void (*ft_hb_blob_destroy_func_t)(
   hb_blob_t* blob
 );
 
+typedef void (*ft_hb_buffer_add_func_t)(
+  hb_buffer_t    *buffer,
+  hb_codepoint_t  codepoint,
+  unsigned int    cluster
+);
+
 typedef void (*ft_hb_buffer_add_utf8_func_t)(
   hb_buffer_t* buffer,
   const char* text,
   int text_length,
   unsigned int item_offset,
   int item_length
+);
+
+typedef hb_bool_t (*ft_hb_buffer_allocation_successful_func_t)(
+  hb_buffer_t  *buffer
 );
 
 typedef void (*ft_hb_buffer_clear_contents_func_t)(
@@ -69,6 +79,16 @@ typedef unsigned int (*ft_hb_buffer_get_length_func_t)(
 
 typedef void (*ft_hb_buffer_guess_segment_properties_func_t)(
   hb_buffer_t* buffer
+);
+
+typedef hb_bool_t (*ft_hb_buffer_pre_allocate_func_t)(
+  hb_buffer_t  *buffer,
+  unsigned int  size
+);
+
+typedef void (*ft_hb_buffer_set_direction_func_t)(
+  hb_buffer_t    *buffer,
+  hb_direction_t  direction
 );
 
 typedef hb_face_t* (*ft_hb_face_create_func_t)(
@@ -133,12 +153,37 @@ typedef void (*ft_hb_ot_layout_lookup_collect_glyphs_func_t)(
   hb_set_t* lookups_after
 );
 
+typedef unsigned (*ft_hb_ot_layout_lookup_get_glyph_alternates_func_t)(
+  hb_face_t      *face,
+  unsigned        lookup_index,
+  hb_codepoint_t  glyph,
+  unsigned        start_offset,
+  unsigned       *alternate_count /* IN/OUT */,
+  hb_codepoint_t *alternate_glyphs /* OUT */
+);
+
 typedef hb_bool_t (*ft_hb_ot_layout_lookup_would_substitute_func_t)(
   hb_face_t* face,
   unsigned int lookup_index,
   const hb_codepoint_t* glyphs,
   unsigned int glyph_count,
   hb_bool_t zero_context
+);
+
+typedef unsigned int (*ft_hb_ot_layout_table_get_feature_tags_func_t)(
+  hb_face_t    *face,
+  hb_tag_t      table_tag,
+  unsigned int  start_offset,
+  unsigned int *feature_count /* IN/OUT */,
+  hb_tag_t     *feature_tags /* OUT */
+);
+
+typedef void (*ft_hb_ot_shape_glyphs_closure_func_t)(
+  hb_font_t          *font,
+  hb_buffer_t        *buffer,
+  const hb_feature_t *features,
+  unsigned int        num_features,
+  hb_set_t           *glyphs
 );
 
 typedef void (*ft_hb_ot_tags_from_script_and_language_func_t)(
@@ -150,10 +195,32 @@ typedef void (*ft_hb_ot_tags_from_script_and_language_func_t)(
   hb_tag_t* feature_tags
 );
 
+typedef void (*ft_hb_set_add_func_t)(
+  hb_set_t       *set,
+  hb_codepoint_t  codepoint
+);
+
+typedef hb_bool_t (*ft_hb_set_allocation_successful_func_t)(
+  const hb_set_t *set
+);
+
+typedef void (*ft_hb_set_clear_func_t) (
+  hb_set_t *set
+);
+
 typedef hb_set_t* (*ft_hb_set_create_func_t)(void);
 
 typedef void (*ft_hb_set_destroy_func_t)(
   hb_set_t* set
+);
+
+typedef void (*ft_hb_set_del_func_t)(
+  hb_set_t       *set,
+  hb_codepoint_t  codepoint
+);
+
+typedef unsigned int (*ft_hb_set_get_population_func_t)(
+  const hb_set_t *set
 );
 
 typedef hb_bool_t (*ft_hb_set_is_empty_func_t)(
@@ -168,6 +235,11 @@ typedef hb_bool_t (*ft_hb_set_next_func_t)(
 typedef void (*ft_hb_set_subtract_func_t)(
   hb_set_t* set,
   const hb_set_t* other
+);
+
+typedef void (*ft_hb_set_union_func_t)(
+  hb_set_t       *set,
+  const hb_set_t *other
 );
 
 typedef void (*ft_hb_shape_func_t)(
