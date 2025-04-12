@@ -25,6 +25,10 @@ typedef struct ft_hb_funcs_t {
 struct  AF_ModuleRec_;
 FT_LOCAL( void ) ft_hb_funcs_init ( struct  AF_ModuleRec_ *af_module );
 FT_LOCAL( void ) ft_hb_funcs_done ( struct  AF_ModuleRec_ *af_module );
+
+struct AF_FaceGlobalsRec_;
+FT_LOCAL( int ) ft_hb_enabled ( struct AF_FaceGlobalsRec_ *globals );
+
 #define hb(x) globals->module->hb_funcs->hb_##x
 
 #else /* FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC */

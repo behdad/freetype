@@ -103,11 +103,22 @@ void ft_hb_funcs_done ( struct AF_ModuleRec_ *af_module)
   }
 }
 
-#else /* !FT_CONFIG_OPTION_USE_HARFBUZZ* */
+int ft_hb_enabled ( struct AF_FaceGlobalsRec_ *globals )
+{
+  return globals->module->hb_funcs != NULL;
+}
 
-/* ANSI C doesn't like empty source files */
-typedef int  ft_hb_dummy_;
+#else /* FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC */
 
-#endif /* !FT_CONFIG_OPTION_USE_HARFBUZZ* */
+int ft_hb_enabled ( struct AF_FaceGlobalsRec_ *globals )
+{
+#ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
+  return TRUE;
+#else
+  return FALSE;
+#endif
+}
+
+#endif /* FT_CONFIG_OPTION_USE_HARFBUZZ_DYNAMIC */
 
 /* END */
