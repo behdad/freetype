@@ -348,7 +348,7 @@ if libpng_dep.found()
   ft2_deps += [libpng_dep]
 endif
 
-# Harfbuzz support.
+# HarfBuzz support.
 harfbuzz_opt = get_option('harfbuzz')
 harfbuzz_dep = disabler()
 if harfbuzz_opt == 'enabled' or harfbuzz_opt == 'auto'
@@ -518,7 +518,7 @@ summary({'OS': host_machine.system(),
 summary({'Zlib': zlib_option,
          'Bzip2': bzip2_dep.found(),
          'Png': libpng_dep.found(),
-         'Harfbuzz': harfbuzz_opt,
+         'HarfBuzz': harfbuzz_opt,
          'Brotli': brotli_dep.found(),
         }, bool_yn: true, section: 'Used Libraries')
 
