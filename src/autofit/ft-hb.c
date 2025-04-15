@@ -50,8 +50,10 @@ void ft_hb_funcs_init ( struct  AF_ModuleRec_ *af_module )
   ft_hb_funcs_t *funcs = NULL;
   ft_hb_version_atleast_func_t version_atleast = NULL;
 
+  af_module->hb_funcs = NULL;
+
   if ( FT_NEW ( funcs ) )
-    goto fail;
+    return;
   FT_ZERO( funcs );
 
 #ifdef _WIN32
@@ -118,8 +120,6 @@ void ft_hb_funcs_init ( struct  AF_ModuleRec_ *af_module )
 fail:
   if ( funcs )
     FT_FREE( funcs );
-
-  af_module->hb_funcs = NULL;
 }
 
 void ft_hb_funcs_done ( struct AF_ModuleRec_ *af_module)
