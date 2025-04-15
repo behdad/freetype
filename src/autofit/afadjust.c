@@ -46,53 +46,74 @@
   adjustment_database[] =
   {
     { 0x21,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ! */
+    { 0x3F,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ? */
     { 0x69,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* i */
     { 0x6A,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* j */
+#if 0
+    /* XXX TODO */
+    { 0x7E,  AF_VERTICAL_ADJUSTMENT_NONE, 1 }, /* ~ */
+#endif
 
     { 0xA1,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ¡ */
+    { 0xA6,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ¦ */
+    { 0xAA,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ª */
+    { 0xBA,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* º */
     { 0xBF,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ¿ */
 
     { 0xC0,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* À */
     { 0xC1,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Á */
     { 0xC2,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Â */
     { 0xC3,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 1 }, /* Ã */
+    { 0xC4,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ä */
+    { 0xC5,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Å */
     { 0xC8,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* È */
     { 0xC9,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* É */
     { 0xCA,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ê */
+    { 0xCB,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ë */
     { 0xCC,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ì */
     { 0xCD,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Í */
     { 0xCE,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Î */
+    { 0xCF,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ï */
 
     { 0xD1,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 1 }, /* Ñ */
     { 0xD2,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ò */
     { 0xD3,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ó */
     { 0xD4,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ô */
     { 0xD5,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 1 }, /* Õ */
+    { 0xD6,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ö */
     { 0xD9,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ù */
     { 0xDA,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ú */
     { 0xDB,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Û */
+    { 0xDC,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ü */
     { 0xDD,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ý */
 
     { 0xE0,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* à */
     { 0xE1,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* á */
     { 0xE2,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* â */
     { 0xE3,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 1 }, /* ã */
+    { 0xE4,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ä */
+    { 0xE5,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* å */
     { 0xE8,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* è */
     { 0xE9,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* é */
     { 0xEA,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ê */
+    { 0xEB,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ë */
     { 0xEC,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ì */
     { 0xED,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* í */
     { 0xEE,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* î */
+    { 0xEF,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ï */
 
     { 0xF1,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 1 }, /* ñ */
     { 0xF2,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ò */
     { 0xF3,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ó */
     { 0xF4,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ô */
     { 0xF5,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 1 }, /* õ */
+    { 0xF6,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ö */
     { 0xF9,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ù */
     { 0xFA,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ú */
     { 0xFB,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* û */
+    { 0xFC,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ü */
     { 0xFD,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ý */
+    { 0xFF,  AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ÿ */
 
     { 0x100, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ā */
     { 0x101, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ā */
@@ -157,6 +178,8 @@
     { 0x14E, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ŏ */
     { 0x14F, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ŏ */
 
+    { 0x150, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ő */
+    { 0x151, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ő */
     { 0x154, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ŕ */
     { 0x155, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ŕ */
     { 0x156, AF_VERTICAL_ADJUSTMENT_BOTTOM_CONTOUR_DOWN, 0 }, /* Ŗ */
@@ -177,11 +200,16 @@
     { 0x16B, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ū */
     { 0x16C, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ŭ */
     { 0x16D, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ŭ */
+    { 0x16E, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ů */
+    { 0x16F, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ů */
 
+    { 0x170, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ű */
+    { 0x171, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ű */
     { 0x174, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ŵ */
     { 0x175, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ŵ */
     { 0x176, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ŷ */
     { 0x177, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ŷ */
+    { 0x178, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ÿ */
     { 0x179, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ź */
     { 0x17A, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* ź */
     { 0x17B, AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP, 0 }, /* Ż */
@@ -191,8 +219,7 @@
   };
 
 
-  /* Helper function: get the adjustment database entry for a codepoint. */
-  static const AF_AdjustmentDatabaseEntry*
+  FT_LOCAL_DEF( const AF_AdjustmentDatabaseEntry* )
   af_adjustment_database_lookup( FT_UInt32  codepoint )
   {
     /* Binary search for database entry */
@@ -231,11 +258,15 @@
            ? -1
            : entry_a.glyph_index > entry_b.glyph_index
                ? 1
-               : 0;
+               : entry_a.codepoint < entry_b.codepoint
+                   ? -1
+                   : entry_a.codepoint > entry_b.codepoint
+                       ? 1
+                       : 0;
   }
 
 
-  static FT_UInt32
+  FT_LOCAL_DEF( const AF_ReverseMapEntry* )
   af_reverse_character_map_lookup( AF_ReverseCharacterMap  map,
                                    FT_Int                  glyph_index )
   {
@@ -244,7 +275,7 @@
 
 
     if ( !map )
-      return 0;
+      return NULL;
 
     length = map->length;
 
@@ -262,49 +293,15 @@
         high = mid - 1;
       else if ( glyph_index > mid_glyph_index )
         low = mid + 1;
+      else if (low != mid)
+        /* We want the first occurrence of `glyph_index` */
+        /* (i.e., the one with the lowest array index).  */
+        high = mid;
       else
-        return map->entries[mid].codepoint;
+        return &map->entries[mid];
     }
 
-    return 0;
-  }
-
-
-  FT_LOCAL_DEF( AF_VerticalSeparationAdjustmentType )
-  af_lookup_vertical_separation_type( AF_ReverseCharacterMap  map,
-                                      FT_Int                  glyph_index )
-  {
-    FT_UInt32  codepoint = af_reverse_character_map_lookup( map,
-                                                            glyph_index );
-
-    const AF_AdjustmentDatabaseEntry  *entry =
-      af_adjustment_database_lookup( codepoint );
-
-
-    if ( !entry )
-      return AF_VERTICAL_ADJUSTMENT_NONE;
-
-    return entry->vertical_separation_adjustment_type;
-  }
-
-
-  /* Return 1 if tilde correction should be applied to the topmost */
-  /* contour, else 0.                                              */
-  FT_LOCAL_DEF( FT_Bool )
-  af_lookup_tilde_correction_type( AF_ReverseCharacterMap  map,
-                                   FT_Int                  glyph_index )
-  {
-    FT_UInt32  codepoint = af_reverse_character_map_lookup( map,
-                                                            glyph_index );
-
-    const AF_AdjustmentDatabaseEntry  *entry =
-      af_adjustment_database_lookup( codepoint );
-
-
-    if ( !entry )
-      return 0;
-
-    return entry->apply_tilde;
+    return NULL;
   }
 
 
@@ -345,7 +342,7 @@
     buffer:           a buffer containing only the input code point
     feature_tag_pool: the current list of features under consideration
     current_features: the current list of features being applied
-    num_features:     length of current_features
+    num_features:     length of `current_features`
     result:           the set of glyphs that the input code point can map to
 
     The algorithm works by running the `hb_ot_shape_glyphs_closure` function
@@ -405,6 +402,7 @@
 
     hb_tag_t  feature_tag;
 
+    FT_UNUSED( globals );
 
     /* Get the list of glyphs that are created by only transforming, */
     /* based on the features in `current_features`.                  */
@@ -416,10 +414,10 @@
     }
 
     hb(ot_shape_glyphs_closure)( font,
-                                 buffer,
-                                 current_features,
-                                 num_features,
-                                 baseline_glyphs );
+                                buffer,
+                                current_features,
+                                num_features,
+                                baseline_glyphs );
     if ( !hb(set_allocation_successful)( baseline_glyphs ) )
     {
       error = FT_Err_Out_Of_Memory;
@@ -473,10 +471,10 @@
       current_features[num_features].tag = feature_tag;
 
       hb(ot_shape_glyphs_closure)( font,
-                                   buffer,
-                                   current_features,
-                                   num_features + 1,
-                                   new_glyphs );
+                                  buffer,
+                                  current_features,
+                                  num_features + 1,
+                                  new_glyphs );
       if ( !hb(set_allocation_successful)( new_glyphs ) )
       {
         error = FT_Err_Out_Of_Memory;
@@ -521,79 +519,32 @@
 
 
   static FT_Error
-  af_all_glyph_variants( AF_FaceGlobals  globals,
-                         FT_Face     face,
+  af_all_glyph_variants( AF_FaceGlobals globals,
                          hb_font_t  *hb_font,
+                         hb_set_t   *feature_tags,
+                         hb_set_t   *type_3_lookup_indices,
                          FT_UInt32   codepoint,
                          hb_set_t*   result )
   {
     FT_Error  error;
 
+    FT_Face     face = globals->face;
     FT_Memory   memory  = face->memory;
     hb_face_t  *hb_face = hb(font_get_face)( hb_font );
 
-    FT_Bool       feature_list_done;
-    unsigned int  start_offset;
-
-    /* The set of all feature tags in the font. */
-    hb_set_t        *feature_tags          = hb(set_create)();
-    hb_set_t        *type_3_lookup_indices = hb(set_create)();
-    hb_buffer_t     *codepoint_buffer      = hb(buffer_create)();
+    hb_buffer_t     *codepoint_buffer = hb(buffer_create)();
     hb_codepoint_t  *type_3_alternate_glyphs_buffer;
 
     hb_feature_t  *feature_buffer;
-
-    /* List of features containing type 3 lookups. */
-    hb_tag_t  feature_list[] =
-    {
-      HB_TAG( 's', 'a', 'l', 't' ),
-      HB_TAG( 's', 'w', 's', 'h' ),
-      HB_TAG( 'n', 'a', 'l', 't' ),
-      HB_TAG_NONE
-    };
 
     hb_codepoint_t  lookup_index;
     FT_UInt         base_glyph_index;
 
 
-    if ( !hb(set_allocation_successful)( feature_tags )           ||
-         !hb(buffer_allocation_successful)( codepoint_buffer )    ||
-         !hb(set_allocation_successful)( type_3_lookup_indices ) )
+    if ( !hb(buffer_allocation_successful)( codepoint_buffer ) )
     {
       error = FT_Err_Out_Of_Memory;
       goto Exit;
-    }
-
-    /* Populate `feature_tags` using the output of */
-    /* `hb_ot_layout_table_get_feature_tags`.      */
-    feature_list_done = 0;
-    start_offset      = 0;
-
-    while ( !feature_list_done )
-    {
-      unsigned int  feature_count = 20;
-      hb_tag_t      tags[20];
-
-      unsigned int  i;
-
-
-      hb(ot_layout_table_get_feature_tags)( hb_face,
-                                            HB_OT_TAG_GSUB,
-                                            start_offset,
-                                            &feature_count,
-                                            tags );
-      start_offset += 20;
-      if ( feature_count < 20 )
-        feature_list_done = 1;
-
-      for ( i = 0; i < feature_count; i++ )
-        hb(set_add)( feature_tags, tags[i] );
-
-      if ( !hb(set_allocation_successful)( feature_tags ) )
-      {
-        error = FT_Err_Out_Of_Memory;
-        goto Exit;
-      }
     }
 
     /* Make a buffer only consisting of the given code point. */
@@ -621,25 +572,6 @@
                                           result );
     if ( error )
       goto Exit;
-
-    /* Add the alternative glyph forms that come from features using
-       type 3 lookups.
-
-       This file from gtk was very useful in figuring out my approach:
-
-         https://gitlab.gnome.org/GNOME/gtk/-/blob/40f20fee3d8468749dfb233a6f95921c765c1163/gtk/gtkfontchooserwidget.c#L2100
-     */
-    hb(ot_layout_collect_lookups)( hb_face,
-                                   HB_OT_TAG_GSUB,
-                                   NULL,
-                                   NULL,
-                                   feature_list,
-                                   type_3_lookup_indices );
-    if ( !hb(set_allocation_successful)( type_3_lookup_indices ) )
-    {
-      error = FT_Err_Out_Of_Memory;
-      goto Exit;
-    }
 
 #define MAX_ALTERNATES  100  /* ad-hoc value */
 
@@ -672,8 +604,6 @@
     }
 
   Exit:
-    hb(set_destroy)( feature_tags );
-    hb(set_destroy)( type_3_lookup_indices );
     hb(buffer_destroy)( codepoint_buffer );
     FT_FREE( feature_buffer );
     FT_FREE( type_3_alternate_glyphs_buffer );
@@ -722,33 +652,106 @@
       goto Exit;
 
 #ifdef FT_CONFIG_OPTION_USE_HARFBUZZ
-
-    if ( ft_hb_enabled ( globals ) )
+    if ( ft_hb_enabled( globals ) )
     {
       hb_font_t  *hb_font    = globals->hb_font;
+      hb_face_t  *hb_face    = hb(font_get_face)( hb_font );
       hb_set_t   *result_set = hb(set_create)();
+
+      /* The set of all feature tags in the font. */
+      hb_set_t  *feature_tags          = hb(set_create)();
+      hb_set_t  *type_3_lookup_indices = hb(set_create)();
+
+      /* List of features containing type 3 lookups. */
+      hb_tag_t  feature_list[] =
+      {
+        HB_TAG( 's', 'a', 'l', 't' ),
+        HB_TAG( 's', 'w', 's', 'h' ),
+        HB_TAG( 'n', 'a', 'l', 't' ),
+        HB_TAG_NONE
+      };
+
+      FT_Bool       feature_list_done;
+      unsigned int  start_offset;
 
       FT_ULong  i;
 
+      FT_UInt32  codepoint;
+      FT_UInt    glyph_index;
 
-      if ( !hb(set_allocation_successful)( result_set ) )
+
+      if ( !hb(set_allocation_successful)( result_set )            ||
+           !hb(set_allocation_successful)( feature_tags )          ||
+           !hb(set_allocation_successful)( type_3_lookup_indices ) )
       {
         error = FT_Err_Out_Of_Memory;
         goto harfbuzz_path_Exit;
+      }
+
+      /* Populate `feature_tags` using the output of */
+      /* `hb_ot_layout_table_get_feature_tags`.      */
+      feature_list_done = 0;
+      start_offset      = 0;
+
+      while ( !feature_list_done )
+      {
+        unsigned int  feature_count = 20;
+        hb_tag_t      tags[20];
+
+        unsigned int  n;
+
+
+        hb(ot_layout_table_get_feature_tags)( hb_face,
+                                             HB_OT_TAG_GSUB,
+                                             start_offset,
+                                             &feature_count,
+                                             tags );
+        start_offset += 20;
+        if ( feature_count < 20 )
+          feature_list_done = 1;
+
+        for ( n = 0; n < feature_count; n++ )
+          hb(set_add)( feature_tags, tags[n] );
+
+        if ( !hb(set_allocation_successful)( feature_tags ) )
+        {
+          error = FT_Err_Out_Of_Memory;
+          goto Exit;
+        }
+      }
+
+      /* Add the alternative glyph forms that come from features using
+         type 3 lookups.
+
+         This file from gtk was very useful in figuring out my approach:
+
+           https://gitlab.gnome.org/GNOME/gtk/-/blob/40f20fee3d8468749dfb233a6f95921c765c1163/gtk/gtkfontchooserwidget.c#L2100
+       */
+      hb(ot_layout_collect_lookups)( hb_face,
+                                    HB_OT_TAG_GSUB,
+                                    NULL,
+                                    NULL,
+                                    feature_list,
+                                    type_3_lookup_indices );
+      if ( !hb(set_allocation_successful)( type_3_lookup_indices ) )
+      {
+        error = FT_Err_Out_Of_Memory;
+        goto Exit;
       }
 
       /* Find all glyph variants of the code points, then make an entry */
       /* from the glyph to the code point for each one.                 */
       for ( i = 0; i < AF_ADJUSTMENT_DATABASE_LENGTH; i++ )
       {
-        FT_UInt32  codepoint = adjustment_database[i].codepoint;
+        codepoint = adjustment_database[i].codepoint;
 
         hb_codepoint_t  glyph;
 
 
         error = af_all_glyph_variants( globals,
-                                       face,
                                        hb_font,
+                                       feature_tags,
+                                       type_3_lookup_indices,
                                        codepoint,
                                        result_set );
         if ( error )
@@ -777,16 +780,58 @@
 
     harfbuzz_path_Exit:
       hb(set_destroy)( result_set );
+      hb(set_destroy)( feature_tags );
+      hb(set_destroy)( type_3_lookup_indices );
+
       if ( error )
         goto Exit;
+
+      ft_qsort( ( *map )->entries,
+                ( *map )->length,
+                sizeof ( AF_ReverseMapEntry ),
+                af_reverse_character_map_entry_compare );
+
+      /* OpenType features like 'unic' map lowercase letter glyphs to    */
+      /* uppercase forms (and vice versa), which could lead to the use   */
+      /* of a wrong entry in the adjustment database.  For this reason   */
+      /* we prioritize cmap entries.                                     */
+      /*                                                                 */
+      /* XXX Note, however, that this cannot cover all cases since there */
+      /* might be contradictory entries for glyphs not in the cmap.  A   */
+      /* possible solution might be to specially mark pairs of related   */
+      /* lowercase and uppercase characters in the adjustment database   */
+      /* that have diacritics on different vertical sides (for example,  */
+      /* U+0122 'Ģ' and U+0123 'ģ').  The auto-hinter could then perform */
+      /* a topological analysis to do the right thing.                   */
+
+      codepoint = FT_Get_First_Char( face, &glyph_index );
+      while ( glyph_index )
+      {
+        AF_ReverseMapEntry  *entry;
+
+
+        entry = (AF_ReverseMapEntry*)
+                  af_reverse_character_map_lookup( *map, glyph_index );
+        if ( entry )
+        {
+          FT_Int  idx = entry->glyph_index;
+
+
+          while ( entry->glyph_index == idx )
+          {
+            entry->codepoint = codepoint;
+            entry++;
+          }
+        }
+
+        codepoint = FT_Get_Next_Char( face, codepoint, &glyph_index );
+      }
     }
     else
-#endif /* FT_CONFIG_OPTION_USE_HARFBUZZ */
+#endif /* !FT_CONFIG_OPTION_USE_HARFBUZZ */
     {
       FT_UInt  i;
-#ifdef FT_DEBUG_LEVEL_TRACE
-      int  failed_lookups = 0;
-#endif
+      FT_Long  insert_point;
 
 
       for ( i = 0; i < AF_ADJUSTMENT_DATABASE_LENGTH; i++ )
@@ -796,30 +841,65 @@
 
 
         if ( glyph == 0 )
-        {
-#ifdef FT_DEBUG_LEVEL_TRACE
-          failed_lookups++;
-#endif
           continue;
-        }
 
         error = af_reverse_character_map_expand( *map, &capacity, memory );
         if ( error )
           goto Exit;
 
+        insert_point = ( *map )-> length;
+
         ( *map )->length++;
-        ( *map )->entries[i].glyph_index = glyph;
-        ( *map )->entries[i].codepoint   = codepoint;
+        ( *map )->entries[insert_point].glyph_index = glyph;
+        ( *map )->entries[insert_point].codepoint   = codepoint;
       }
+
+      ft_qsort( ( *map )->entries,
+                ( *map )->length,
+                sizeof ( AF_ReverseMapEntry ),
+                af_reverse_character_map_entry_compare );
     }
 
-    ft_qsort( ( *map )->entries,
-              ( *map )->length,
-              sizeof ( AF_ReverseMapEntry ),
-              af_reverse_character_map_entry_compare );
-
     FT_TRACE4(( "    reverse character map built successfully"
-                " with %ld entries\n", (*map)->length ));
+                " with %ld entries\n", ( *map )->length ));
+
+#ifdef FT_DEBUG_LEVEL_TRACE
+    {
+      FT_Long  i;
+
+
+      FT_TRACE7(( "       gidx   code    adj  tilde\n" ));
+               /* "      XXXXX  0xXXXX  XXXX   XXX" */
+      FT_TRACE7(( "     ----------------------------\n" ));
+
+      for ( i = 0; i < ( *map )->length; i++ )
+      {
+        FT_Long  glyph_index = ( *map )->entries[i].glyph_index;
+        FT_Int   codepoint   = ( *map )->entries[i].codepoint;
+
+        const AF_AdjustmentDatabaseEntry    *db_entry =
+          af_adjustment_database_lookup( codepoint );
+        AF_VerticalSeparationAdjustmentType  adj_type;
+
+
+        if ( !db_entry )
+          continue;
+
+        adj_type = db_entry->vertical_separation_adjustment_type;
+
+        FT_TRACE7(( "      %5ld  0x%04X  %4s   %3s\n",
+                    glyph_index,
+                    codepoint,
+                    adj_type == AF_VERTICAL_ADJUSTMENT_BOTTOM_CONTOUR_DOWN
+                      ? "down"
+                      : adj_type == AF_VERTICAL_ADJUSTMENT_TOP_CONTOUR_UP
+                        ? "up"
+                        : "",
+                    db_entry->apply_tilde ? "yes" : "no" ));
+      }
+    }
+#endif
+
 
   Exit:
     face->charmap = old_charmap;

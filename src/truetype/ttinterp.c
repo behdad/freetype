@@ -1160,19 +1160,34 @@
 #undef PACK
 
 
-#ifndef FT_CONFIG_OPTION_NO_ASSEMBLER
+#ifdef FT_INT64
+
+#define TT_MulFix14( a, b )  TT_MulFix14_64( a, b )
+
+  static inline FT_F26Dot6
+  TT_MulFix14_64( FT_F26Dot6  a,
+                  FT_F2Dot14  b )
+  {
+    FT_Int64  ab = MUL_INT64( a, b );
+
+
+    ab += 0x2000 + ( ab >> 63 );  /* rounding phase */
+
+    return (FT_F26Dot6)( ab >> 14 );
+  }
+
+#elif !defined( FT_CONFIG_OPTION_NO_ASSEMBLER )
 
 #if defined( __arm__ )                                 && \
     ( defined( __thumb2__ ) || !defined( __thumb__ ) )
 
 #define TT_MulFix14  TT_MulFix14_arm
 
-  static FT_Int32
+  static __inline FT_Int32
   TT_MulFix14_arm( FT_Int32  a,
-                   FT_Int    b )
+                   FT_Int32  b )
   {
     FT_Int32  t, t2;
-
 
 #if defined( __CC_ARM ) || defined( __ARMCC__ )
 
@@ -1199,8 +1214,8 @@
 #endif
       "adds   %1, %1, %0\n\t"           /* %1 += %0 */
       "adc    %2, %2, #0\n\t"           /* %2 += carry */
-      "mov    %0, %1, lsr #14\n\t"      /* %0  = %1 >> 16 */
-      "orr    %0, %0, %2, lsl #18\n\t"  /* %0 |= %2 << 16 */
+      "mov    %0, %1, lsr #14\n\t"      /* %0  = %1 >> 14 */
+      "orr    %0, %0, %2, lsl #18\n\t"  /* %0 |= %2 << 18 */
       : "=r"(a), "=&r"(t2), "=&r"(t)
       : "r"(a), "r"(b)
       : "cc" );
@@ -1210,49 +1225,60 @@
     return a;
   }
 
-#endif /* __arm__ && ( __thumb2__ || !__thumb__ ) */
+#elif defined( __i386__ ) || defined( _M_IX86 )
 
-#endif /* !FT_CONFIG_OPTION_NO_ASSEMBLER */
+#define TT_MulFix14  TT_MulFix14_i386
 
+  /* documentation is in freetype.h */
 
-#if defined( __GNUC__ )                              && \
-    ( defined( __i386__ ) || defined( __x86_64__ ) )
-
-#define TT_MulFix14  TT_MulFix14_long_long
-
-  /* Temporarily disable the warning that C90 doesn't support `long long'. */
-#if ( __GNUC__ * 100 + __GNUC_MINOR__ ) >= 406
-#pragma GCC diagnostic push
-#endif
-#pragma GCC diagnostic ignored "-Wlong-long"
-
-  /* This is declared `noinline' because inlining the function results */
-  /* in slower code.  The `pure' attribute indicates that the result   */
-  /* only depends on the parameters.                                   */
-  static __attribute__(( noinline ))
-         __attribute__(( pure )) FT_Int32
-  TT_MulFix14_long_long( FT_Int32  a,
-                         FT_Int    b )
+  static __inline FT_Int32
+  TT_MulFixi14_i386( FT_Int32  a,
+                     FT_Int32  b )
   {
+    FT_Int32  result;
 
-    long long  ret = (long long)a * b;
+#if defined( __GNUC__ )
 
-    /* The following line assumes that right shifting of signed values */
-    /* will actually preserve the sign bit.  The exact behaviour is    */
-    /* undefined, but this is true on x86 and x86_64.                  */
-    long long  tmp = ret >> 63;
+    __asm__ __volatile__ (
+      "imul  %%edx\n"
+      "movl  %%edx, %%ecx\n"
+      "sarl  $31, %%ecx\n"
+      "addl  $0x2000, %%ecx\n"
+      "addl  %%ecx, %%eax\n"
+      "adcl  $0, %%edx\n"
+      "shrl  $14, %%eax\n"
+      "shll  $18, %%edx\n"
+      "addl  %%edx, %%eax\n"
+      : "=a"(result), "=d"(b)
+      : "a"(a), "d"(b)
+      : "%ecx", "cc" );
 
+#elif defined( _MSC_VER)
 
-    ret += 0x2000 + tmp;
+    __asm
+    {
+      mov eax, a
+      mov edx, b
+      imul edx
+      mov ecx, edx
+      sar ecx, 31
+      add ecx, 2000h
+      add eax, ecx
+      adc edx, 0
+      shr eax, 14
+      shl edx, 18
+      add eax, edx
+      mov result, eax
+    }
 
-    return (FT_Int32)( ret >> 14 );
+#endif
+
+    return result;
   }
 
-#if ( __GNUC__ * 100 + __GNUC_MINOR__ ) >= 406
-#pragma GCC diagnostic pop
-#endif
+#endif /* __i386__ || _M_IX86 */
 
-#endif /* __GNUC__ && ( __i386__ || __x86_64__ ) */
+#endif /* !FT_CONFIG_OPTION_NO_ASSEMBLER */
 
 
 #ifndef TT_MulFix14
@@ -1294,54 +1320,33 @@
 #endif  /* !TT_MulFix14 */
 
 
-#if defined( __GNUC__ )        && \
-    ( defined( __i386__ )   ||    \
-      defined( __x86_64__ ) ||    \
-      defined( __arm__ )    )
+#ifdef FT_INT64
 
-#define TT_DotFix14  TT_DotFix14_long_long
-
-#if ( __GNUC__ * 100 + __GNUC_MINOR__ ) >= 406
-#pragma GCC diagnostic push
-#endif
-#pragma GCC diagnostic ignored "-Wlong-long"
-
-  static __attribute__(( pure )) FT_Int32
-  TT_DotFix14_long_long( FT_Int32  ax,
-                         FT_Int32  ay,
-                         FT_Int    bx,
-                         FT_Int    by )
+  /* compute (ax*bx+ay*by)/2^14 with maximum accuracy and rounding */
+  static inline FT_F26Dot6
+  TT_DotFix14( FT_F26Dot6  ax,
+               FT_F26Dot6  ay,
+               FT_F2Dot14  bx,
+               FT_F2Dot14  by )
   {
-    /* Temporarily disable the warning that C90 doesn't support */
-    /* `long long'.                                             */
-
-    long long  temp1 = (long long)ax * bx;
-    long long  temp2 = (long long)ay * by;
+    FT_Int64  temp1 = MUL_INT64( ax, bx );
+    FT_Int64  temp2 = MUL_INT64( ay, by );
 
 
     temp1 += temp2;
     temp2  = temp1 >> 63;
-    temp1 += 0x2000 + temp2;
+    temp1 += 0x2000 + temp2;  /* rounding phase */
 
-    return (FT_Int32)( temp1 >> 14 );
-
+    return (FT_F26Dot6)( temp1 >> 14 );
   }
 
-#if ( __GNUC__ * 100 + __GNUC_MINOR__ ) >= 406
-#pragma GCC diagnostic pop
-#endif
+#else
 
-#endif /* __GNUC__ && (__arm__ || __i386__ || __x86_64__) */
-
-
-#ifndef TT_DotFix14
-
-  /* compute (ax*bx+ay*by)/2^14 with maximum accuracy and rounding */
-  static FT_Int32
-  TT_DotFix14( FT_Int32  ax,
-               FT_Int32  ay,
-               FT_Int    bx,
-               FT_Int    by )
+  static inline FT_F26Dot6
+  TT_DotFix14( FT_F26Dot6  ax,
+               FT_F26Dot6  ay,
+               FT_F2Dot14  bx,
+               FT_F2Dot14  by )
   {
     FT_Int32   m, s, hi1, hi2, hi;
     FT_UInt32  l, lo1, lo2, lo;
@@ -1374,10 +1379,10 @@
     l   = lo + 0x2000U;
     hi += ( l < lo );
 
-    return (FT_Int32)( ( (FT_UInt32)hi << 18 ) | ( l >> 14 ) );
+    return (FT_F26Dot6)( ( (FT_UInt32)hi << 18 ) | ( l >> 14 ) );
   }
 
-#endif /* TT_DotFix14 */
+#endif /* !FT_INT64 */
 
 
   /**************************************************************************
